@@ -213,7 +213,7 @@ cat "$VERSION"/*/all.SHA256SUMS.asc > SHA256SUMS.asc
 ```
 
 
-- Upload to the sugarchaincore.org server (`/var/www/bin/sugarchain-core-${VERSION}/`):
+- Upload to the bitcoincore.org server (`/var/www/bin/sugarchain-core-${VERSION}/`):
     1. The contents of each `./sugarchain/guix-build-${VERSION}/output/${HOST}/` directory, except for
        `*-debug*` files.
 
@@ -226,11 +226,11 @@ cat "$VERSION"/*/all.SHA256SUMS.asc > SHA256SUMS.asc
        for troubleshooting by developers. It is assumed that anyone that is
        interested in debugging can run guix to generate the files for
        themselves. To avoid end-user confusion about which file to pick, as well
-       as save storage space *do not upload these to the sugarchaincore.org server,
+       as save storage space *do not upload these to the bitcoincore.org server,
        nor put them in the torrent*.
 
        ```sh
-       find guix-build-${VERSION}/output/ -maxdepth 2 -type f -not -name "SHA256SUMS.part" -and -not -name "*debug*" -exec scp {} user@sugarchaincore.org:/var/www/bin/sugarchain-core-${VERSION} \;
+       find guix-build-${VERSION}/output/ -maxdepth 2 -type f -not -name "SHA256SUMS.part" -and -not -name "*debug*" -exec scp {} user@bitcoincore.org:/var/www/bin/sugarchain-core-${VERSION} \;
        ```
 
     2. The `SHA256SUMS` file
@@ -249,22 +249,22 @@ cat "$VERSION"/*/all.SHA256SUMS.asc > SHA256SUMS.asc
   ```
 
   Insert the magnet URI into the announcement sent to mailing lists. This permits
-  people without access to `sugarchaincore.org` to download the binary distribution.
+  people without access to `bitcoincore.org` to download the binary distribution.
   Also put it into the `optional_magnetlink:` slot in the YAML file for
-  sugarchaincore.org.
+  bitcoincore.org.
 
 - Update other repositories and websites for new version
 
-  - sugarchaincore.org blog post
+  - bitcoincore.org blog post
 
-  - sugarchaincore.org maintained versions update:
-    [table](https://github.com/sugarchain-core/sugarchaincore.org/commits/master/_includes/posts/maintenance-table.md)
+  - bitcoincore.org maintained versions update:
+    [table](https://github.com/sugarchain-core/bitcoincore.org/commits/master/_includes/posts/maintenance-table.md)
 
   - Delete post-EOL [release branches](https://github.com/sugarchain/sugarchain/branches/all) and create a tag `v${branch_name}-final`.
 
   - Delete ["Needs backport" labels](https://github.com/sugarchain/sugarchain/labels?q=backport) for non-existing branches.
 
-  - sugarchaincore.org RPC documentation update
+  - bitcoincore.org RPC documentation update
 
       - Install [golang](https://golang.org/doc/install)
 
@@ -272,7 +272,7 @@ cat "$VERSION"/*/all.SHA256SUMS.asc > SHA256SUMS.asc
 
       - Run sugarchaind on regtest
 
-      - Clone the [sugarchaincore.org repository](https://github.com/sugarchain-core/sugarchaincore.org)
+      - Clone the [bitcoincore.org repository](https://github.com/sugarchain-core/bitcoincore.org)
 
       - Run: `go run generate.go` while being in `contrib/doc-gen` folder, and with sugarchain-cli in PATH
 
@@ -294,7 +294,7 @@ cat "$VERSION"/*/all.SHA256SUMS.asc > SHA256SUMS.asc
 
   - sugarchain-dev and sugarchain-core-dev mailing list
 
-  - Sugarchain Core announcements list https://sugarchaincore.org/en/list/announcements/join/
+  - Sugarchain Core announcements list https://bitcoincore.org/en/list/announcements/join/
 
   - Sugarchain Core Twitter https://twitter.com/sugarchaincoreorg
 

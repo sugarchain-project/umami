@@ -11,7 +11,7 @@ Please report bugs using the issue tracker at GitHub:
 
 To receive security and update notifications, please subscribe to:
 
-  <https://sugarchaincore.org/en/list/announcements/join/>
+  <https://bitcoincore.org/en/list/announcements/join/>
 
 How to Upgrade
 ==============
@@ -740,7 +740,7 @@ Low-level RPC changes
 - #10728 `7397af9` fix typo in help text for removeprunedfunds (AkioNak)
 - #10193 `6dbcc74` scripted-diff: Remove #include <boost/foreach.hpp> (jtimon)
 - #10676 `379aed0` document script-based return fields for validateaddress (instagibbs)
-- #10651 `cef4b5c` Verify binaries from sugarchaincore.org and sugarchain.org (TheBlueMatt)
+- #10651 `cef4b5c` Verify binaries from bitcoincore.org and sugarchain.org (TheBlueMatt)
 - #10786 `ca4c545` Add PR description to merge commit in github-merge.py (sipa)
 - #10812 `c5904e8` [utils] Allow sugarchain-cli's -rpcconnect option to be used with square brackets (jnewbery)
 - #10842 `3895e25` Fix incorrect Doxygen tag (@ince → @since). Doxygen parameter name matching (practicalswift)

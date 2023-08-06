@@ -3,7 +3,7 @@
 
 Sugarchain Core version 0.20.1 is now available from:
 
-  <https://sugarchaincore.org/bin/sugarchain-core-0.20.1/>
+  <https://bitcoincore.org/bin/sugarchain-core-0.20.1/>
 
 This minor release includes various bug fixes and performance
 improvements, as well as updated translations.
@@ -14,7 +14,7 @@ Please report bugs using the issue tracker at GitHub:
 
 To receive security and update notifications, please subscribe to:
 
-  <https://sugarchaincore.org/en/list/announcements/join/>
+  <https://bitcoincore.org/en/list/announcements/join/>
 
 How to Upgrade
 ==============

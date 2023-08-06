@@ -5,7 +5,7 @@ Setup
 ---------------------
 Sugarchain Core is the original Sugarchain client and it builds the backbone of the network. It downloads and, by default, stores the entire history of Sugarchain transactions, which requires a few hundred gigabytes of disk space. Depending on the speed of your computer and network connection, the synchronization process can take anywhere from a few hours to a day or more.
 
-To download Sugarchain Core, visit [sugarchaincore.org](https://sugarchaincore.org/en/download/).
+To download Sugarchain Core, visit [bitcoincore.org](https://bitcoincore.org/en/download/).
 
 Running
 ---------------------
@@ -54,7 +54,7 @@ The Sugarchain repo's [root README](/README.md) contains relevant information on
 - [Developer Notes](developer-notes.md)
 - [Productivity Notes](productivity.md)
 - [Release Process](release-process.md)
-- [Source Code Documentation (External Link)](https://doxygen.sugarchaincore.org/)
+- [Source Code Documentation (External Link)](https://doxygen.bitcoincore.org/)
 - [Translation Process](translation_process.md)
 - [Translation Strings Policy](translation_strings_policy.md)
 - [JSON-RPC Interface](JSON-RPC-interface.md)

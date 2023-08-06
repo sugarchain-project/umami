@@ -6,7 +6,7 @@ announced or released.
 
 Sugarchain Core version 24.0.1 is now available from:
 
-  <https://sugarchaincore.org/bin/sugarchain-core-24.0.1/>
+  <https://bitcoincore.org/bin/sugarchain-core-24.0.1/>
 
 This release includes new features, various bug fixes and performance
 improvements, as well as updated translations.
@@ -17,7 +17,7 @@ Please report bugs using the issue tracker at GitHub:
 
 To receive security and update notifications, please subscribe to:
 
-  <https://sugarchaincore.org/en/list/announcements/join/>
+  <https://bitcoincore.org/en/list/announcements/join/>
 
 How to Upgrade
 ==============
@@ -91,7 +91,7 @@ not accept unconfirmed transactions as final, and if they insist on doing so,
 to take the appropriate steps to ensure they have some recourse or plan for
 when their assumptions do not hold.
 
-[Sugarchain Core 0.12.0]: https://sugarchaincore.org/en/releases/0.12.0/#opt-in-replace-by-fee-transactions
+[Sugarchain Core 0.12.0]: https://bitcoincore.org/en/releases/0.12.0/#opt-in-replace-by-fee-transactions
 [bip125]: https://github.com/sugarchain/bips/blob/master/bip-0125.mediawiki
 
 Notable changes

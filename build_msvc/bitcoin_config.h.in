@@ -128,7 +128,7 @@
 #define PACKAGE_STRING $
 
 /* Define to the home page for this package. */
-#define PACKAGE_URL "https://sugarchaincore.org/"
+#define PACKAGE_URL "https://bitcoincore.org/"
 
 /* Define to the version of this package. */
 #define PACKAGE_VERSION $

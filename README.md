@@ -1,10 +1,10 @@
 Sugarchain Core integration/staging tree
 =====================================
 
-https://sugarchaincore.org
+https://bitcoincore.org
 
 For an immediately usable, binary version of the Sugarchain Core software, see
-https://sugarchaincore.org/en/download/.
+https://bitcoincore.org/en/download/.
 
 What is Sugarchain Core?
 ---------------------

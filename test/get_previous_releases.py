@@ -297,7 +297,7 @@ def download_binary(tag, args) -> int:
     tarball = "sugarchain-{tag}-{platform}.tar.gz".format(
         tag=tag[1:], platform=platform
     )
-    tarballUrl = "https://sugarchaincore.org/{bin_path}/{tarball}".format(
+    tarballUrl = "https://bitcoincore.org/{bin_path}/{tarball}".format(
         bin_path=bin_path, tarball=tarball
     )
 
