@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2018 The Bitcoin Core developers
+# Copyright (c) 2015-2018 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test share/rpcauth/rpcauth.py
@@ -12,16 +12,21 @@ import os
 import sys
 import unittest
 
+
 class TestRPCAuth(unittest.TestCase):
     def setUp(self):
         config = configparser.ConfigParser()
         config_path = os.path.abspath(
-            os.path.join(os.sep, os.path.abspath(os.path.dirname(__file__)),
-            "../config.ini"))
+            os.path.join(
+                os.sep,
+                os.path.abspath(os.path.dirname(__file__)),
+                "../config.ini",
+            )
+        )
         with open(config_path, encoding="utf8") as config_file:
             config.read_file(config_file)
-        sys.path.insert(0, os.path.dirname(config['environment']['RPCAUTH']))
-        self.rpcauth = importlib.import_module('rpcauth')
+        sys.path.insert(0, os.path.dirname(config["environment"]["RPCAUTH"]))
+        self.rpcauth = importlib.import_module("rpcauth")
 
     def test_generate_salt(self):
         for i in range(16, 32 + 1):
@@ -38,10 +43,11 @@ class TestRPCAuth(unittest.TestCase):
         password = self.rpcauth.generate_password()
         password_hmac = self.rpcauth.password_to_hmac(salt, password)
 
-        m = hmac.new(salt.encode('utf-8'), password.encode('utf-8'), 'SHA256')
+        m = hmac.new(salt.encode("utf-8"), password.encode("utf-8"), "SHA256")
         expected_password_hmac = m.hexdigest()
 
         self.assertEqual(expected_password_hmac, password_hmac)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

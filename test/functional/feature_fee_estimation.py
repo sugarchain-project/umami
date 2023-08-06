@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2014-2022 The Bitcoin Core developers
+# Copyright (c) 2014-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test fee estimation code."""
@@ -11,7 +11,7 @@ import random
 from test_framework.messages import (
     COIN,
 )
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import (
     assert_equal,
     assert_greater_than,
@@ -23,7 +23,14 @@ from test_framework.wallet import MiniWallet
 
 
 def small_txpuzzle_randfee(
-    wallet, from_node, conflist, unconflist, amount, min_fee, fee_increment, batch_reqs
+    wallet,
+    from_node,
+    conflist,
+    unconflist,
+    amount,
+    min_fee,
+    fee_increment,
+    batch_reqs,
 ):
     """Create and send a transaction with a random fee using MiniWallet.
 
@@ -49,7 +56,9 @@ def small_txpuzzle_randfee(
         total_in += t["value"]
         utxos_to_spend.append(t)
     if total_in <= amount + fee:
-        raise RuntimeError(f"Insufficient funds: need {amount + fee}, have {total_in}")
+        raise RuntimeError(
+            f"Insufficient funds: need {amount + fee}, have {total_in}"
+        )
     tx = wallet.create_self_transfer_multi(
         utxos_to_spend=utxos_to_spend,
         fee_per_output=0,
@@ -61,8 +70,12 @@ def small_txpuzzle_randfee(
     txid = tx.hash
     tx_hex = tx.serialize().hex()
 
-    batch_reqs.append(from_node.sendrawtransaction.get_request(hexstring=tx_hex, maxfeerate=0))
-    unconflist.append({"txid": txid, "vout": 0, "value": total_in - amount - fee})
+    batch_reqs.append(
+        from_node.sendrawtransaction.get_request(hexstring=tx_hex, maxfeerate=0)
+    )
+    unconflist.append(
+        {"txid": txid, "vout": 0, "value": total_in - amount - fee}
+    )
     unconflist.append({"txid": txid, "vout": 1, "value": amount})
 
     return (tx.get_vsize(), fee)
@@ -77,7 +90,9 @@ def check_raw_estimates(node, fees_seen):
             feerate = float(e["feerate"])
             assert_greater_than(feerate, 0)
 
-            if feerate + delta < min(fees_seen) or feerate - delta > max(fees_seen):
+            if feerate + delta < min(fees_seen) or feerate - delta > max(
+                fees_seen
+            ):
                 raise AssertionError(
                     f"Estimated fee ({feerate}) out of range ({min(fees_seen)},{max(fees_seen)})"
                 )
@@ -126,7 +141,7 @@ def make_tx(wallet, utxo, feerate):
     )
 
 
-class EstimateFeeTest(BitcoinTestFramework):
+class EstimateFeeTest(SugarchainTestFramework):
     def set_test_params(self):
         self.num_nodes = 3
         # Force fSendTrickle to true (via whitelist.noban)
@@ -176,7 +191,9 @@ class EstimateFeeTest(BitcoinTestFramework):
             for node in self.nodes:
                 node.batch(batch_sendtx_reqs)
             self.sync_mempools(wait=0.1)
-            mined = mining_node.getblock(self.generate(mining_node, 1)[0], True)["tx"]
+            mined = mining_node.getblock(
+                self.generate(mining_node, 1)[0], True
+            )["tx"]
             # update which txouts are confirmed
             newmem = []
             for utx in self.memutxo:
@@ -191,7 +208,8 @@ class EstimateFeeTest(BitcoinTestFramework):
         self.confutxo = self.wallet.send_self_transfer_multi(
             from_node=node,
             utxos_to_spend=[self.wallet.get_utxo() for _ in range(2)],
-            num_outputs=2048)['new_utxos']
+            num_outputs=2048,
+        )["new_utxos"]
         while len(node.getrawmempool()) > 0:
             self.generate(node, 1, sync_fun=self.no_op)
 
@@ -262,7 +280,9 @@ class EstimateFeeTest(BitcoinTestFramework):
             for _ in range(5):
                 tx = make_tx(self.wallet, utxos.pop(0), low_feerate)
                 txs.append(tx)
-            batch_send_tx = [node.sendrawtransaction.get_request(tx["hex"]) for tx in txs]
+            batch_send_tx = [
+                node.sendrawtransaction.get_request(tx["hex"]) for tx in txs
+            ]
             for n in self.nodes:
                 n.batch(batch_send_tx)
             # Mine the transactions on another node
@@ -276,9 +296,16 @@ class EstimateFeeTest(BitcoinTestFramework):
                 tx = make_tx(self.wallet, u, high_feerate)
                 node.sendrawtransaction(tx["hex"])
                 txs.append(tx)
-            dec_txs = [res["result"] for res in node.batch([node.decoderawtransaction.get_request(tx["hex"]) for tx in txs])]
+            dec_txs = [
+                res["result"]
+                for res in node.batch(
+                    [
+                        node.decoderawtransaction.get_request(tx["hex"])
+                        for tx in txs
+                    ]
+                )
+            ]
             self.wallet.scan_txs(dec_txs)
-
 
         # Mine the last replacement txs
         self.sync_mempools(wait=0.1, nodes=[node, miner])
@@ -286,7 +313,7 @@ class EstimateFeeTest(BitcoinTestFramework):
 
         # Only 10% of the transactions were really confirmed with a low feerate,
         # the rest needed to be RBF'd. We must return the 90% conf rate feerate.
-        high_feerate_kvb = Decimal(high_feerate) / COIN * 10 ** 3
+        high_feerate_kvb = Decimal(high_feerate) / COIN * 10**3
         est_feerate = node.estimatesmartfee(2)["feerate"]
         assert_equal(est_feerate, high_feerate_kvb)
 
@@ -320,7 +347,9 @@ class EstimateFeeTest(BitcoinTestFramework):
 
         self.log.info("Restarting node with fresh estimation")
         self.stop_node(0)
-        fee_dat = os.path.join(self.nodes[0].datadir, self.chain, "fee_estimates.dat")
+        fee_dat = os.path.join(
+            self.nodes[0].datadir, self.chain, "fee_estimates.dat"
+        )
         os.remove(fee_dat)
         self.start_node(0)
         self.connect_nodes(0, 1)

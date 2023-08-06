@@ -1,22 +1,22 @@
-When Bitcoin Core automatically opens outgoing P2P connections, it chooses
+When Sugarchain Core automatically opens outgoing P2P connections, it chooses
 a peer (address and port) from its list of potential peers. This list is
 populated with unchecked data gossiped over the P2P network by other peers.
 
-A malicious actor may gossip an address:port where no Bitcoin node is listening,
-or one where a service is listening that is not related to the Bitcoin network.
-As a result, this service may occasionally get connection attempts from Bitcoin
+A malicious actor may gossip an address:port where no Sugarchain node is listening,
+or one where a service is listening that is not related to the Sugarchain network.
+As a result, this service may occasionally get connection attempts from Sugarchain
 nodes.
 
 "Bad" ports are ones used by services which are usually not open to the public
-and usually require authentication. A connection attempt (by Bitcoin Core,
-trying to connect because it thinks there is a Bitcoin node on that
+and usually require authentication. A connection attempt (by Sugarchain Core,
+trying to connect because it thinks there is a Sugarchain node on that
 address:port) to such service may be considered a malicious action by an
 ultra-paranoid administrator. An example for such a port is 22 (ssh). On the
 other hand, connection attempts to public services that usually do not require
 authentication are unlikely to be considered a malicious action,
 e.g. port 80 (http).
 
-Below is a list of "bad" ports which Bitcoin Core avoids when choosing a peer to
+Below is a list of "bad" ports which Sugarchain Core avoids when choosing a peer to
 connect to. If a node is listening on such a port, it will likely receive fewer
 incoming connections.
 
@@ -103,9 +103,9 @@ incoming connections.
 
 For further information see:
 
-[pull/23306](https://github.com/bitcoin/bitcoin/pull/23306#issuecomment-947516736)
+[pull/23306](https://github.com/sugarchain/sugarchain/pull/23306#issuecomment-947516736)
 
-[pull/23542](https://github.com/bitcoin/bitcoin/pull/23542)
+[pull/23542](https://github.com/sugarchain/sugarchain/pull/23542)
 
 [fetch.spec.whatwg.org](https://fetch.spec.whatwg.org/#port-blocking)
 

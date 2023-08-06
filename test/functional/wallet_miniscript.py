@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022 The Bitcoin Core developers
+# Copyright (c) 2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test Miniscript descriptors integration in the wallet."""
 
 from test_framework.descriptors import descsum_create
 from test_framework.psbt import PSBT, PSBT_IN_SHA256
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import assert_equal
 
 
@@ -139,7 +139,7 @@ MINISCRIPTS_PRIV = [
 ]
 
 
-class WalletMiniscriptTest(BitcoinTestFramework):
+class WalletMiniscriptTest(SugarchainTestFramework):
     def add_options(self, parser):
         self.add_wallet_options(parser, legacy=False)
 
@@ -167,17 +167,22 @@ class WalletMiniscriptTest(BitcoinTestFramework):
 
         self.log.info("Testing we derive new addresses for it")
         assert_equal(
-            self.ms_wo_wallet.getnewaddress(), self.funder.deriveaddresses(desc, 0)[0]
+            self.ms_wo_wallet.getnewaddress(),
+            self.funder.deriveaddresses(desc, 0)[0],
         )
         assert_equal(
-            self.ms_wo_wallet.getnewaddress(), self.funder.deriveaddresses(desc, 1)[1]
+            self.ms_wo_wallet.getnewaddress(),
+            self.funder.deriveaddresses(desc, 1)[1],
         )
 
         self.log.info("Testing we detect funds sent to one of them")
         addr = self.ms_wo_wallet.getnewaddress()
         txid = self.funder.sendtoaddress(addr, 0.01)
         self.wait_until(
-            lambda: len(self.ms_wo_wallet.listunspent(minconf=0, addresses=[addr])) == 1
+            lambda: len(
+                self.ms_wo_wallet.listunspent(minconf=0, addresses=[addr])
+            )
+            == 1
         )
         utxo = self.ms_wo_wallet.listunspent(minconf=0, addresses=[addr])[0]
         assert utxo["txid"] == txid and utxo["solvable"]
@@ -200,7 +205,9 @@ class WalletMiniscriptTest(BitcoinTestFramework):
         )
         assert res[0]["success"], res
 
-        self.log.info("Generating an address for it and testing it detects funds")
+        self.log.info(
+            "Generating an address for it and testing it detects funds"
+        )
         addr = self.ms_sig_wallet.getnewaddress()
         txid = self.funder.sendtoaddress(addr, 0.01)
         self.wait_until(lambda: txid in self.funder.getrawmempool())
@@ -227,7 +234,7 @@ class WalletMiniscriptTest(BitcoinTestFramework):
         self.log.info("Signing it and checking the satisfaction.")
         if sha256_preimages is not None:
             psbt = PSBT.from_base64(psbt)
-            for (h, preimage) in sha256_preimages.items():
+            for h, preimage in sha256_preimages.items():
                 k = PSBT_IN_SHA256.to_bytes(1, "big") + bytes.fromhex(h)
                 psbt.i[0].map[k] = bytes.fromhex(preimage)
             psbt = psbt.to_base64()
@@ -243,7 +250,9 @@ class WalletMiniscriptTest(BitcoinTestFramework):
             self.log.info("Broadcasting the transaction.")
             # If necessary, satisfy a relative timelock
             if sequence is not None:
-                self.funder.generatetoaddress(sequence, self.funder.getnewaddress())
+                self.funder.generatetoaddress(
+                    sequence, self.funder.getnewaddress()
+                )
             # If necessary, satisfy an absolute timelock
             height = self.funder.getblockcount()
             if locktime is not None and height < locktime:
@@ -275,7 +284,10 @@ class WalletMiniscriptTest(BitcoinTestFramework):
             ]
         )[0]
         assert not res["success"]
-        assert "is not sane: witnesses without signature exist" in res["error"]["message"]
+        assert (
+            "is not sane: witnesses without signature exist"
+            in res["error"]["message"]
+        )
 
         # Test we can track any type of Miniscript
         for ms in MINISCRIPTS:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2022 The Bitcoin Core developers
+# Copyright (c) 2015-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test BIP65 (CHECKLOCKTIMEVERIFY).
@@ -25,7 +25,7 @@ from test_framework.script import (
     OP_CHECKLOCKTIMEVERIFY,
     OP_DROP,
 )
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import assert_equal
 from test_framework.wallet import (
     MiniWallet,
@@ -42,7 +42,9 @@ def cltv_modify_tx(tx, prepend_scriptsig, nsequence=None, nlocktime=None):
         tx.vin[0].nSequence = nsequence
         tx.nLockTime = nlocktime
 
-    tx.vin[0].scriptSig = CScript(prepend_scriptsig + list(CScript(tx.vin[0].scriptSig)))
+    tx.vin[0].scriptSig = CScript(
+        prepend_scriptsig + list(CScript(tx.vin[0].scriptSig))
+    )
     tx.rehash()
 
 
@@ -60,40 +62,58 @@ def cltv_invalidate(tx, failure_reason):
     scheme = [
         # | Script to prepend to scriptSig                  | nSequence  | nLockTime    |
         # +-------------------------------------------------+------------+--------------+
-        [[OP_CHECKLOCKTIMEVERIFY],                            None,       None],
-        [[OP_1NEGATE, OP_CHECKLOCKTIMEVERIFY, OP_DROP],       None,       None],
-        [[CScriptNum(100), OP_CHECKLOCKTIMEVERIFY, OP_DROP],  0,          TIME_GENESIS_BLOCK],
-        [[CScriptNum(100), OP_CHECKLOCKTIMEVERIFY, OP_DROP],  0,          50],
-        [[CScriptNum(50),  OP_CHECKLOCKTIMEVERIFY, OP_DROP],  SEQUENCE_FINAL, 50],
+        [[OP_CHECKLOCKTIMEVERIFY], None, None],
+        [[OP_1NEGATE, OP_CHECKLOCKTIMEVERIFY, OP_DROP], None, None],
+        [
+            [CScriptNum(100), OP_CHECKLOCKTIMEVERIFY, OP_DROP],
+            0,
+            TIME_GENESIS_BLOCK,
+        ],
+        [[CScriptNum(100), OP_CHECKLOCKTIMEVERIFY, OP_DROP], 0, 50],
+        [[CScriptNum(50), OP_CHECKLOCKTIMEVERIFY, OP_DROP], SEQUENCE_FINAL, 50],
     ][failure_reason]
 
-    cltv_modify_tx(tx, prepend_scriptsig=scheme[0], nsequence=scheme[1], nlocktime=scheme[2])
+    cltv_modify_tx(
+        tx,
+        prepend_scriptsig=scheme[0],
+        nsequence=scheme[1],
+        nlocktime=scheme[2],
+    )
 
 
 def cltv_validate(tx, height):
     # Modify the signature in vin 0 and nSequence/nLockTime of the tx to pass CLTV
     scheme = [[CScriptNum(height), OP_CHECKLOCKTIMEVERIFY, OP_DROP], 0, height]
 
-    cltv_modify_tx(tx, prepend_scriptsig=scheme[0], nsequence=scheme[1], nlocktime=scheme[2])
+    cltv_modify_tx(
+        tx,
+        prepend_scriptsig=scheme[0],
+        nsequence=scheme[1],
+        nlocktime=scheme[2],
+    )
 
 
 CLTV_HEIGHT = 111
 
 
-class BIP65Test(BitcoinTestFramework):
+class BIP65Test(SugarchainTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
-        self.extra_args = [[
-            f'-testactivationheight=cltv@{CLTV_HEIGHT}',
-            '-whitelist=noban@127.0.0.1',
-            '-par=1',  # Use only one script thread to get the exact reject reason for testing
-            '-acceptnonstdtxn=1',  # cltv_invalidate is nonstandard
-        ]]
+        self.extra_args = [
+            [
+                f"-testactivationheight=cltv@{CLTV_HEIGHT}",
+                "-whitelist=noban@127.0.0.1",
+                "-par=1",  # Use only one script thread to get the exact reject reason for testing
+                "-acceptnonstdtxn=1",  # cltv_invalidate is nonstandard
+            ]
+        ]
         self.setup_clean_chain = True
         self.rpc_timeout = 480
 
     def test_cltv_info(self, *, is_active):
-        assert_equal(self.nodes[0].getdeploymentinfo()['deployments']['bip65'], {
+        assert_equal(
+            self.nodes[0].getdeploymentinfo()["deployments"]["bip65"],
+            {
                 "active": is_active,
                 "height": CLTV_HEIGHT,
                 "type": "buried",
@@ -111,43 +131,63 @@ class BIP65Test(BitcoinTestFramework):
         self.generate(self.nodes[0], CLTV_HEIGHT - 2 - 10)
         assert_equal(self.nodes[0].getblockcount(), CLTV_HEIGHT - 2)
 
-        self.log.info("Test that invalid-according-to-CLTV transactions can still appear in a block")
+        self.log.info(
+            "Test that invalid-according-to-CLTV transactions can still appear in a block"
+        )
 
         # create one invalid tx per CLTV failure reason (5 in total) and collect them
         invalid_cltv_txs = []
         for i in range(5):
-            spendtx = wallet.create_self_transfer()['tx']
+            spendtx = wallet.create_self_transfer()["tx"]
             cltv_invalidate(spendtx, i)
             invalid_cltv_txs.append(spendtx)
 
         tip = self.nodes[0].getbestblockhash()
-        block_time = self.nodes[0].getblockheader(tip)['mediantime'] + 1
-        block = create_block(int(tip, 16), create_coinbase(CLTV_HEIGHT - 1), block_time, version=3, txlist=invalid_cltv_txs)
+        block_time = self.nodes[0].getblockheader(tip)["mediantime"] + 1
+        block = create_block(
+            int(tip, 16),
+            create_coinbase(CLTV_HEIGHT - 1),
+            block_time,
+            version=3,
+            txlist=invalid_cltv_txs,
+        )
         block.solve()
 
-        self.test_cltv_info(is_active=False)  # Not active as of current tip and next block does not need to obey rules
+        self.test_cltv_info(
+            is_active=False
+        )  # Not active as of current tip and next block does not need to obey rules
         peer.send_and_ping(msg_block(block))
-        self.test_cltv_info(is_active=True)  # Not active as of current tip, but next block must obey rules
+        self.test_cltv_info(
+            is_active=True
+        )  # Not active as of current tip, but next block must obey rules
         assert_equal(self.nodes[0].getbestblockhash(), block.hash)
 
         self.log.info("Test that blocks must now be at least version 4")
         tip = block.sha256
         block_time += 1
-        block = create_block(tip, create_coinbase(CLTV_HEIGHT), block_time, version=3)
+        block = create_block(
+            tip, create_coinbase(CLTV_HEIGHT), block_time, version=3
+        )
         block.solve()
 
-        with self.nodes[0].assert_debug_log(expected_msgs=[f'{block.hash}, bad-version(0x00000003)']):
+        with self.nodes[0].assert_debug_log(
+            expected_msgs=[f"{block.hash}, bad-version(0x00000003)"]
+        ):
             peer.send_and_ping(msg_block(block))
             assert_equal(int(self.nodes[0].getbestblockhash(), 16), tip)
             peer.sync_with_ping()
 
-        self.log.info("Test that invalid-according-to-CLTV transactions cannot appear in a block")
+        self.log.info(
+            "Test that invalid-according-to-CLTV transactions cannot appear in a block"
+        )
         block.nVersion = 4
-        block.vtx.append(CTransaction()) # dummy tx after coinbase that will be replaced later
+        block.vtx.append(
+            CTransaction()
+        )  # dummy tx after coinbase that will be replaced later
 
         # create and test one invalid tx per CLTV failure reason (5 in total)
         for i in range(5):
-            spendtx = wallet.create_self_transfer()['tx']
+            spendtx = wallet.create_self_transfer()["tx"]
             cltv_invalidate(spendtx, i)
 
             expected_cltv_reject_reason = [
@@ -160,13 +200,17 @@ class BIP65Test(BitcoinTestFramework):
             # First we show that this tx is valid except for CLTV by getting it
             # rejected from the mempool for exactly that reason.
             assert_equal(
-                [{
-                    'txid': spendtx.hash,
-                    'wtxid': spendtx.getwtxid(),
-                    'allowed': False,
-                    'reject-reason': expected_cltv_reject_reason,
-                }],
-                self.nodes[0].testmempoolaccept(rawtxs=[spendtx.serialize().hex()], maxfeerate=0),
+                [
+                    {
+                        "txid": spendtx.hash,
+                        "wtxid": spendtx.getwtxid(),
+                        "allowed": False,
+                        "reject-reason": expected_cltv_reject_reason,
+                    }
+                ],
+                self.nodes[0].testmempoolaccept(
+                    rawtxs=[spendtx.serialize().hex()], maxfeerate=0
+                ),
             )
 
             # Now we verify that a block with this transaction is also invalid.
@@ -174,12 +218,18 @@ class BIP65Test(BitcoinTestFramework):
             block.hashMerkleRoot = block.calc_merkle_root()
             block.solve()
 
-            with self.nodes[0].assert_debug_log(expected_msgs=[f'CheckInputScripts on {block.vtx[-1].hash} failed with {expected_cltv_reject_reason}']):
+            with self.nodes[0].assert_debug_log(
+                expected_msgs=[
+                    f"CheckInputScripts on {block.vtx[-1].hash} failed with {expected_cltv_reject_reason}"
+                ]
+            ):
                 peer.send_and_ping(msg_block(block))
                 assert_equal(int(self.nodes[0].getbestblockhash(), 16), tip)
                 peer.sync_with_ping()
 
-        self.log.info("Test that a version 4 block with a valid-according-to-CLTV transaction is accepted")
+        self.log.info(
+            "Test that a version 4 block with a valid-according-to-CLTV transaction is accepted"
+        )
         cltv_validate(spendtx, CLTV_HEIGHT - 1)
 
         block.vtx.pop(1)
@@ -187,11 +237,13 @@ class BIP65Test(BitcoinTestFramework):
         block.hashMerkleRoot = block.calc_merkle_root()
         block.solve()
 
-        self.test_cltv_info(is_active=True)  # Not active as of current tip, but next block must obey rules
+        self.test_cltv_info(
+            is_active=True
+        )  # Not active as of current tip, but next block must obey rules
         peer.send_and_ping(msg_block(block))
         self.test_cltv_info(is_active=True)  # Active as of current tip
         assert_equal(int(self.nodes[0].getbestblockhash(), 16), block.sha256)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     BIP65Test().main()

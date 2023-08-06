@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2022 The Bitcoin Core developers
+# Copyright (c) 2015-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test behavior of -maxuploadtarget.
@@ -19,7 +19,7 @@ from test_framework.messages import (
     msg_getdata,
 )
 from test_framework.p2p import P2PInterface
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import (
     assert_equal,
     mine_large_block,
@@ -39,22 +39,24 @@ class TestP2PConn(P2PInterface):
         message.block.calc_sha256()
         self.block_receive_map[message.block.sha256] += 1
 
-class MaxUploadTest(BitcoinTestFramework):
 
+class MaxUploadTest(SugarchainTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 1
-        self.extra_args = [[
-            "-maxuploadtarget=800M",
-            "-datacarriersize=100000",
-        ]]
+        self.extra_args = [
+            [
+                "-maxuploadtarget=800M",
+                "-datacarriersize=100000",
+            ]
+        ]
         self.supports_cli = False
 
     def run_test(self):
         # Before we connect anything, we first set the time on the node
         # to be in the past, otherwise things break because the CNode
         # time counters can't be reset backward after initialization
-        old_time = int(time.time() - 2*60*60*24*7)
+        old_time = int(time.time() - 2 * 60 * 60 * 24 * 7)
         self.nodes[0].setmocktime(old_time)
 
         # Generate some old blocks
@@ -74,11 +76,11 @@ class MaxUploadTest(BitcoinTestFramework):
 
         # Store the hash; we'll request this later
         big_old_block = self.nodes[0].getbestblockhash()
-        old_block_size = self.nodes[0].getblock(big_old_block, True)['size']
+        old_block_size = self.nodes[0].getblock(big_old_block, True)["size"]
         big_old_block = int(big_old_block, 16)
 
         # Advance to two days ago
-        self.nodes[0].setmocktime(int(time.time()) - 2*60*60*24)
+        self.nodes[0].setmocktime(int(time.time()) - 2 * 60 * 60 * 24)
 
         # Mine one more block, so that the prior block looks old
         mine_large_block(self, self.wallet, self.nodes[0])
@@ -93,7 +95,7 @@ class MaxUploadTest(BitcoinTestFramework):
         getdata_request = msg_getdata()
         getdata_request.inv.append(CInv(MSG_BLOCK, big_old_block))
 
-        max_bytes_per_day = 800*1024*1024
+        max_bytes_per_day = 800 * 1024 * 1024
         daily_buffer = 144 * 4000000
         max_bytes_available = max_bytes_per_day - daily_buffer
         success_count = max_bytes_available // old_block_size
@@ -102,7 +104,7 @@ class MaxUploadTest(BitcoinTestFramework):
         # succeed for ~235 tries.
         for i in range(success_count):
             p2p_conns[0].send_and_ping(getdata_request)
-            assert_equal(p2p_conns[0].block_receive_map[big_old_block], i+1)
+            assert_equal(p2p_conns[0].block_receive_map[big_old_block], i + 1)
 
         assert_equal(len(self.nodes[0].getpeerinfo()), 3)
         # At most a couple more tries should succeed (depending on how long
@@ -111,7 +113,9 @@ class MaxUploadTest(BitcoinTestFramework):
             p2p_conns[0].send_message(getdata_request)
         p2p_conns[0].wait_for_disconnect()
         assert_equal(len(self.nodes[0].getpeerinfo()), 2)
-        self.log.info("Peer 0 disconnected after downloading old block too many times")
+        self.log.info(
+            "Peer 0 disconnected after downloading old block too many times"
+        )
 
         # Requesting the current block on p2p_conns[1] should succeed indefinitely,
         # even when over the max upload target.
@@ -119,7 +123,7 @@ class MaxUploadTest(BitcoinTestFramework):
         getdata_request.inv = [CInv(MSG_BLOCK, big_new_block)]
         for i in range(800):
             p2p_conns[1].send_and_ping(getdata_request)
-            assert_equal(p2p_conns[1].block_receive_map[big_new_block], i+1)
+            assert_equal(p2p_conns[1].block_receive_map[big_new_block], i + 1)
 
         self.log.info("Peer 1 able to repeatedly download new block")
 
@@ -144,29 +148,41 @@ class MaxUploadTest(BitcoinTestFramework):
 
         self.nodes[0].disconnect_p2ps()
 
-        self.log.info("Restarting node 0 with download permission and 1MB maxuploadtarget")
-        self.restart_node(0, ["-whitelist=download@127.0.0.1", "-maxuploadtarget=1"])
+        self.log.info(
+            "Restarting node 0 with download permission and 1MB maxuploadtarget"
+        )
+        self.restart_node(
+            0, ["-whitelist=download@127.0.0.1", "-maxuploadtarget=1"]
+        )
 
         # Reconnect to self.nodes[0]
         peer = self.nodes[0].add_p2p_connection(TestP2PConn())
 
-        #retrieve 20 blocks which should be enough to break the 1MB limit
+        # retrieve 20 blocks which should be enough to break the 1MB limit
         getdata_request.inv = [CInv(MSG_BLOCK, big_new_block)]
         for i in range(20):
             peer.send_and_ping(getdata_request)
-            assert_equal(peer.block_receive_map[big_new_block], i+1)
+            assert_equal(peer.block_receive_map[big_new_block], i + 1)
 
         getdata_request.inv = [CInv(MSG_BLOCK, big_old_block)]
         peer.send_and_ping(getdata_request)
 
-        self.log.info("Peer still connected after trying to download old block (download permission)")
+        self.log.info(
+            "Peer still connected after trying to download old block (download permission)"
+        )
         peer_info = self.nodes[0].getpeerinfo()
         assert_equal(len(peer_info), 1)  # node is still connected
-        assert_equal(peer_info[0]['permissions'], ['download'])
+        assert_equal(peer_info[0]["permissions"], ["download"])
 
-        self.log.info("Test passing an unparsable value to -maxuploadtarget throws an error")
+        self.log.info(
+            "Test passing an unparsable value to -maxuploadtarget throws an error"
+        )
         self.stop_node(0)
-        self.nodes[0].assert_start_raises_init_error(extra_args=["-maxuploadtarget=abc"], expected_msg="Error: Unable to parse -maxuploadtarget: 'abc'")
+        self.nodes[0].assert_start_raises_init_error(
+            extra_args=["-maxuploadtarget=abc"],
+            expected_msg="Error: Unable to parse -maxuploadtarget: 'abc'",
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     MaxUploadTest().main()

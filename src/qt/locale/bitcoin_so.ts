@@ -66,11 +66,11 @@
         <translation type="unfinished">Cinwaanada qaabilaadda</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your Sugarchain addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation type="unfinished">Kuwani waa cinwaanada Seeraar aad ku direyso lacagaha. Marwalba caddadka ama cinwaanka laga soo hubiyo inta aadan dirin lacagta qadaadiicda ah ka hor inta aadan dirin.</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. Use the 'Create new receiving address' button in the receive tab to create new addresses.
+        <source>These are your Sugarchain addresses for receiving payments. Use the 'Create new receiving address' button in the receive tab to create new addresses.
 Signing is only possible with addresses of the type 'legacy'.</source>
         <translation type="unfinished">Kuwani waa cinwaanada Seeraar in aad ku direyso lacagaha. Marwalba waxaa ka mid ah masuuliyiinta kubadda cagta ah ee hubinaya in ay ka soo horjeedaan tacaddiyadeeda, taas oo ay ku tallaabsato in ay ka qayb qaataan isbedelka taleemooyinka.</translation>
     </message>
@@ -165,8 +165,8 @@ Signing is only possible with addresses of the type 'legacy'.</source>
         <translation type="unfinished">sideed ula kacsan ama kabadan</translation>
     </message>
     <message>
-        <source>Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
-        <translation type="unfinished">Xusuusnow in encrypting jeebka si buuxda ma uu ilaalin karo bitcoins aad ka xado by furin qaadsiinaya aad computer.</translation>
+        <source>Remember that encrypting your wallet cannot fully protect your sugarchains from being stolen by malware infecting your computer.</source>
+        <translation type="unfinished">Xusuusnow in encrypting jeebka si buuxda ma uu ilaalin karo sugarchains aad ka xado by furin qaadsiinaya aad computer.</translation>
     </message>
     <message>
         <source>Wallet to be encrypted</source>
@@ -225,7 +225,7 @@ Signing is only possible with addresses of the type 'legacy'.</source>
     </message>
 </context>
 <context>
-    <name>BitcoinApplication</name>
+    <name>SugarchainApplication</name>
     <message>
         <source>Settings file %1 might be corrupt or invalid.</source>
         <translation type="unfinished">Settings file,%1waxaa laga yaabaa in musuqmaasuq ama aan asal ahayn.</translation>
@@ -299,7 +299,7 @@ Signing is only possible with addresses of the type 'legacy'.</source>
     </message>
     </context>
 <context>
-    <name>BitcoinGUI</name>
+    <name>SugarchainGUI</name>
     <message numerus="yes">
         <source>Processed %n block(s) of transaction history.</source>
         <translation type="unfinished">
@@ -308,7 +308,7 @@ Signing is only possible with addresses of the type 'legacy'.</source>
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Bitcoin network.</source>
+        <source>%n active connection(s) to Sugarchain network.</source>
         <extracomment>A substring of the tooltip.</extracomment>
         <translation type="unfinished">
             <numerusform />

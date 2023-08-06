@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2019-2022 The Bitcoin Core developers
+# Copyright (c) 2019-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 export LC_ALL=C.UTF-8
 
-export CONTAINER_NAME=ci_native_nowallet_libbitcoinkernel
+export CONTAINER_NAME=ci_native_nowallet_libsugarchainkernel
 export CI_IMAGE_NAME_TAG=ubuntu:focal
 # Use minimum supported python3.7 (or python3.8, as best-effort) and clang-8, see doc/dependencies.md
 export PACKAGES="python3-zmq clang-8 llvm-8 libc++abi-8-dev libc++-8-dev"

@@ -20,7 +20,7 @@
     </message>
     </context>
 <context>
-    <name>BitcoinApplication</name>
+    <name>SugarchainApplication</name>
     <message>
         <source>Internal error</source>
         <translation type="unfinished">Iphutha langaphakathi.</translation>
@@ -80,7 +80,7 @@
     </message>
     </context>
 <context>
-    <name>BitcoinGUI</name>
+    <name>SugarchainGUI</name>
     <message>
         <source>&amp;Options…</source>
         <translation type="unfinished">&amp;Ongakukhetha...</translation>
@@ -117,7 +117,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Bitcoin network.</source>
+        <source>%n active connection(s) to Sugarchain network.</source>
         <extracomment>A substring of the tooltip.</extracomment>
         <translation type="unfinished">
             <numerusform />
@@ -222,7 +222,7 @@
     </message>
     </context>
 <context>
-    <name>bitcoin-core</name>
+    <name>sugarchain-core</name>
     <message>
         <source>Error: Missing checksum</source>
         <translation type="unfinished">Iphutha: iChecksum engekho</translation>

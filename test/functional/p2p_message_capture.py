@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020-2022 The Bitcoin Core developers
+# Copyright (c) 2020-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test per-peer message capture capability.
@@ -12,12 +12,13 @@ from io import BytesIO
 import os
 
 from test_framework.p2p import P2PDataStore, MESSAGEMAP
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import assert_equal
 
 TIME_SIZE = 8
 LENGTH_SIZE = 4
 MSGTYPE_SIZE = 12
+
 
 def mini_parser(dat_file):
     """Parse a data file created by CaptureMessageToFile.
@@ -34,31 +35,35 @@ def mini_parser(dat_file):
 
     We're ignoring these because they're simply too brittle to test here.
     """
-    with open(dat_file, 'rb') as f_in:
+    with open(dat_file, "rb") as f_in:
         # This should have at least one message in it
-        assert os.fstat(f_in.fileno()).st_size >= TIME_SIZE + LENGTH_SIZE + MSGTYPE_SIZE
+        assert (
+            os.fstat(f_in.fileno()).st_size
+            >= TIME_SIZE + LENGTH_SIZE + MSGTYPE_SIZE
+        )
         while True:
             tmp_header_raw = f_in.read(TIME_SIZE + LENGTH_SIZE + MSGTYPE_SIZE)
             if not tmp_header_raw:
                 break
             tmp_header = BytesIO(tmp_header_raw)
-            tmp_header.read(TIME_SIZE) # skip the timestamp field
-            msgtype = tmp_header.read(MSGTYPE_SIZE).rstrip(b'\x00')
+            tmp_header.read(TIME_SIZE)  # skip the timestamp field
+            msgtype = tmp_header.read(MSGTYPE_SIZE).rstrip(b"\x00")
             assert msgtype in MESSAGEMAP
             length: int = int.from_bytes(tmp_header.read(LENGTH_SIZE), "little")
             data = f_in.read(length)
             assert_equal(len(data), length)
 
 
-
-class MessageCaptureTest(BitcoinTestFramework):
+class MessageCaptureTest(SugarchainTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.extra_args = [["-capturemessages"]]
         self.setup_clean_chain = True
 
     def run_test(self):
-        capturedir = os.path.join(self.nodes[0].datadir, "regtest/message_capture")
+        capturedir = os.path.join(
+            self.nodes[0].datadir, "regtest/message_capture"
+        )
         # Connect a node so that the handshake occurs
         self.nodes[0].add_p2p_connection(P2PDataStore())
         self.nodes[0].disconnect_p2ps()
@@ -68,5 +73,5 @@ class MessageCaptureTest(BitcoinTestFramework):
         mini_parser(sent_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     MessageCaptureTest().main()

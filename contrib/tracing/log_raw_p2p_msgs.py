@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021 The Bitcoin Core developers
+# Copyright (c) 2021 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -17,7 +17,7 @@
 
 # eBPF Limitations:
 #
-# Bitcoin P2P messages can be larger than 32kb (e.g. tx, block, ...). The eBPF
+# Sugarchain P2P messages can be larger than 32kb (e.g. tx, block, ...). The eBPF
 # VM's stack is limited to 512 bytes, and we can't allocate more than about 32kb
 # for a P2P message in the eBPF VM. The message data is cut off when the message
 # is larger than MAX_MSG_DATA_LENGTH (see definition below). This can be detected
@@ -117,36 +117,42 @@ int trace_outbound_message(struct pt_regs *ctx) {
 
 
 def print_message(event, inbound):
-    print(f"%s %s msg '%s' from peer %d (%s, %s) with %d bytes: %s" %
-          (
-              f"Warning: incomplete message (only %d out of %d bytes)!" % (
-                  len(event.msg), event.msg_size) if len(event.msg) < event.msg_size else "",
-              "inbound" if inbound else "outbound",
-              event.msg_type.decode("utf-8"),
-              event.peer_id,
-              event.peer_conn_type.decode("utf-8"),
-              event.peer_addr.decode("utf-8"),
-              event.msg_size,
-              bytes(event.msg[:event.msg_size]).hex(),
-          )
-          )
+    print(
+        f"%s %s msg '%s' from peer %d (%s, %s) with %d bytes: %s"
+        % (
+            f"Warning: incomplete message (only %d out of %d bytes)!"
+            % (len(event.msg), event.msg_size)
+            if len(event.msg) < event.msg_size
+            else "",
+            "inbound" if inbound else "outbound",
+            event.msg_type.decode("utf-8"),
+            event.peer_id,
+            event.peer_conn_type.decode("utf-8"),
+            event.peer_addr.decode("utf-8"),
+            event.msg_size,
+            bytes(event.msg[: event.msg_size]).hex(),
+        )
+    )
 
 
-def main(bitcoind_path):
-    bitcoind_with_usdts = USDT(path=str(bitcoind_path))
+def main(sugarchaind_path):
+    sugarchaind_with_usdts = USDT(path=str(sugarchaind_path))
 
     # attaching the trace functions defined in the BPF program to the tracepoints
-    bitcoind_with_usdts.enable_probe(
-        probe="inbound_message", fn_name="trace_inbound_message")
-    bitcoind_with_usdts.enable_probe(
-        probe="outbound_message", fn_name="trace_outbound_message")
-    bpf = BPF(text=program, usdt_contexts=[bitcoind_with_usdts])
+    sugarchaind_with_usdts.enable_probe(
+        probe="inbound_message", fn_name="trace_inbound_message"
+    )
+    sugarchaind_with_usdts.enable_probe(
+        probe="outbound_message", fn_name="trace_outbound_message"
+    )
+    bpf = BPF(text=program, usdt_contexts=[sugarchaind_with_usdts])
 
     # BCC: perf buffer handle function for inbound_messages
     def handle_inbound(_, data, size):
-        """ Inbound message handler.
+        """Inbound message handler.
 
-        Called each time a message is submitted to the inbound_messages BPF table."""
+        Called each time a message is submitted to the inbound_messages BPF table.
+        """
 
         event = bpf["inbound_messages"].event(data)
         print_message(event, True)
@@ -154,9 +160,10 @@ def main(bitcoind_path):
     # BCC: perf buffer handle function for outbound_messages
 
     def handle_outbound(_, data, size):
-        """ Outbound message handler.
+        """Outbound message handler.
 
-        Called each time a message is submitted to the outbound_messages BPF table."""
+        Called each time a message is submitted to the outbound_messages BPF table.
+        """
 
         event = bpf["outbound_messages"].event(data)
         print_message(event, False)
@@ -177,7 +184,7 @@ def main(bitcoind_path):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("USAGE:", sys.argv[0], "path/to/bitcoind")
+        print("USAGE:", sys.argv[0], "path/to/sugarchaind")
         exit()
     path = sys.argv[1]
     main(path)

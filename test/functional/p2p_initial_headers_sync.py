@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022 The Bitcoin Core developers
+# Copyright (c) 2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test initial headers download
@@ -9,7 +9,7 @@ is close to caught up), and that each block announcement results in only one
 additional peer receiving a getheaders message.
 """
 
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.messages import (
     CInv,
     MSG_BLOCK,
@@ -25,13 +25,16 @@ from test_framework.util import (
 )
 import random
 
-class HeadersSyncTest(BitcoinTestFramework):
+
+class HeadersSyncTest(SugarchainTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 1
 
     def announce_random_block(self, peers):
-        new_block_announcement = msg_inv(inv=[CInv(MSG_BLOCK, random.randrange(1<<256))])
+        new_block_announcement = msg_inv(
+            inv=[CInv(MSG_BLOCK, random.randrange(1 << 256))]
+        )
         for p in peers:
             p.send_and_ping(new_block_announcement)
 
@@ -53,7 +56,9 @@ class HeadersSyncTest(BitcoinTestFramework):
 
         all_peers = [peer1, peer2, peer3]
 
-        self.log.info("Verify that peer2 and peer3 don't receive a getheaders after connecting")
+        self.log.info(
+            "Verify that peer2 and peer3 don't receive a getheaders after connecting"
+        )
         for p in all_peers:
             p.sync_with_ping()
         with p2p_lock:
@@ -68,11 +73,13 @@ class HeadersSyncTest(BitcoinTestFramework):
 
         self.log.info("Check that peer1 receives a getheaders in response")
         peer1.wait_for_getheaders()
-        peer1.send_message(msg_headers()) # Send empty response, see above
+        peer1.send_message(msg_headers())  # Send empty response, see above
         with p2p_lock:
             peer1.last_message.pop("getheaders", None)
 
-        self.log.info("Check that exactly 1 of {peer2, peer3} received a getheaders in response")
+        self.log.info(
+            "Check that exactly 1 of {peer2, peer3} received a getheaders in response"
+        )
         count = 0
         peer_receiving_getheaders = None
         for p in [peer2, peer3]:
@@ -81,7 +88,9 @@ class HeadersSyncTest(BitcoinTestFramework):
                     count += 1
                     peer_receiving_getheaders = p
                     p.last_message.pop("getheaders", None)
-                    p.send_message(msg_headers()) # Send empty response, see above
+                    p.send_message(
+                        msg_headers()
+                    )  # Send empty response, see above
 
         assert_equal(count, 1)
 
@@ -91,7 +100,9 @@ class HeadersSyncTest(BitcoinTestFramework):
         self.log.info("Check that peer1 receives a getheaders in response")
         peer1.wait_for_getheaders()
 
-        self.log.info("Check that the remaining peer received a getheaders as well")
+        self.log.info(
+            "Check that the remaining peer received a getheaders as well"
+        )
         expected_peer = peer2
         if peer2 == peer_receiving_getheaders:
             expected_peer = peer3
@@ -100,6 +111,6 @@ class HeadersSyncTest(BitcoinTestFramework):
 
         self.log.info("Success!")
 
-if __name__ == '__main__':
-    HeadersSyncTest().main()
 
+if __name__ == "__main__":
+    HeadersSyncTest().main()

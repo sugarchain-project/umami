@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2018-2022 The Bitcoin Core developers
+# Copyright (c) 2018-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -41,7 +41,7 @@ CI_EXEC "${BASE_ROOT_DIR}/configure" --cache-file=config.cache "$BITCOIN_CONFIG_
 
 CI_EXEC make distdir VERSION="$HOST"
 
-export P_CI_DIR="${BASE_BUILD_DIR}/bitcoin-$HOST"
+export P_CI_DIR="${BASE_BUILD_DIR}/sugarchain-$HOST"
 
 CI_EXEC ./configure --cache-file=../config.cache "$BITCOIN_CONFIG_ALL" "$BITCOIN_CONFIG" || ( (CI_EXEC cat config.log) && false)
 
@@ -53,7 +53,7 @@ if [[ ${USE_MEMORY_SANITIZER} == "true" ]]; then
   # using the Linux getrandom syscall. Avoid using getrandom by undefining
   # HAVE_SYS_GETRANDOM. See https://github.com/google/sanitizers/issues/852 for
   # details.
-  CI_EXEC 'grep -v HAVE_SYS_GETRANDOM src/config/bitcoin-config.h > src/config/bitcoin-config.h.tmp && mv src/config/bitcoin-config.h.tmp src/config/bitcoin-config.h'
+  CI_EXEC 'grep -v HAVE_SYS_GETRANDOM src/config/sugarchain-config.h > src/config/sugarchain-config.h.tmp && mv src/config/sugarchain-config.h.tmp src/config/sugarchain-config.h'
 fi
 
 if [[ "${RUN_TIDY}" == "true" ]]; then

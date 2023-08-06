@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2018-2022 The Bitcoin Core developers
+# Copyright (c) 2018-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
@@ -15,33 +15,40 @@ import sys
 from subprocess import check_output, CalledProcessError
 
 
-EXCLUDED_DIRS = ["src/leveldb/",
-                 "src/crc32c/",
-                 "src/secp256k1/",
-                 "src/minisketch/",
-                ]
+EXCLUDED_DIRS = [
+    "src/leveldb/",
+    "src/crc32c/",
+    "src/secp256k1/",
+    "src/minisketch/",
+]
 
-EXPECTED_BOOST_INCLUDES = ["boost/date_time/posix_time/posix_time.hpp",
-                           "boost/multi_index/hashed_index.hpp",
-                           "boost/multi_index/ordered_index.hpp",
-                           "boost/multi_index/sequenced_index.hpp",
-                           "boost/multi_index_container.hpp",
-                           "boost/process.hpp",
-                           "boost/signals2/connection.hpp",
-                           "boost/signals2/optional_last_value.hpp",
-                           "boost/signals2/signal.hpp",
-                           "boost/test/included/unit_test.hpp",
-                           "boost/test/unit_test.hpp"]
+EXPECTED_BOOST_INCLUDES = [
+    "boost/date_time/posix_time/posix_time.hpp",
+    "boost/multi_index/hashed_index.hpp",
+    "boost/multi_index/ordered_index.hpp",
+    "boost/multi_index/sequenced_index.hpp",
+    "boost/multi_index_container.hpp",
+    "boost/process.hpp",
+    "boost/signals2/connection.hpp",
+    "boost/signals2/optional_last_value.hpp",
+    "boost/signals2/signal.hpp",
+    "boost/test/included/unit_test.hpp",
+    "boost/test/unit_test.hpp",
+]
 
 
 def get_toplevel():
-    return check_output(["git", "rev-parse", "--show-toplevel"], text=True, encoding="utf8").rstrip("\n")
+    return check_output(
+        ["git", "rev-parse", "--show-toplevel"], text=True, encoding="utf8"
+    ).rstrip("\n")
 
 
 def list_files_by_suffix(suffixes):
     exclude_args = [":(exclude)" + dir for dir in EXCLUDED_DIRS]
 
-    files_list = check_output(["git", "ls-files", "src"] + exclude_args, text=True, encoding="utf8").splitlines()
+    files_list = check_output(
+        ["git", "ls-files", "src"] + exclude_args, text=True, encoding="utf8"
+    ).splitlines()
 
     return [file for file in files_list if file.endswith(suffixes)]
 
@@ -63,7 +70,19 @@ def find_included_cpps():
     included_cpps = list()
 
     try:
-        included_cpps = check_output(["git", "grep", "-E", r"^#include [<\"][^>\"]+\.cpp[>\"]", "--", "*.cpp", "*.h"], text=True, encoding="utf8").splitlines()
+        included_cpps = check_output(
+            [
+                "git",
+                "grep",
+                "-E",
+                r"^#include [<\"][^>\"]+\.cpp[>\"]",
+                "--",
+                "*.cpp",
+                "*.h",
+            ],
+            text=True,
+            encoding="utf8",
+        ).splitlines()
     except CalledProcessError as e:
         if e.returncode > 1:
             raise e
@@ -77,13 +96,19 @@ def find_extra_boosts():
     exclusion_set = set()
 
     try:
-        included_boosts = check_output(["git", "grep", "-E", r"^#include <boost/", "--", "*.cpp", "*.h"], text=True, encoding="utf8").splitlines()
+        included_boosts = check_output(
+            ["git", "grep", "-E", r"^#include <boost/", "--", "*.cpp", "*.h"],
+            text=True,
+            encoding="utf8",
+        ).splitlines()
     except CalledProcessError as e:
         if e.returncode > 1:
             raise e
 
     for boost in included_boosts:
-        filtered_included_boost_set.add(re.findall(r'(?<=\<).+?(?=\>)', boost)[0])
+        filtered_included_boost_set.add(
+            re.findall(r"(?<=\<).+?(?=\>)", boost)[0]
+        )
 
     for expected_boost in EXPECTED_BOOST_INCLUDES:
         for boost in filtered_included_boost_set:
@@ -100,7 +125,12 @@ def find_quote_syntax_inclusions():
     quote_syntax_inclusions = list()
 
     try:
-        quote_syntax_inclusions = check_output(["git", "grep", r"^#include \"", "--", "*.cpp", "*.h"] + exclude_args, text=True, encoding="utf8").splitlines()
+        quote_syntax_inclusions = check_output(
+            ["git", "grep", r"^#include \"", "--", "*.cpp", "*.h"]
+            + exclude_args,
+            text=True,
+            encoding="utf8",
+        ).splitlines()
     except CalledProcessError as e:
         if e.returncode > 1:
             raise e
@@ -116,7 +146,11 @@ def main():
     # Check for duplicate includes
     for filename in list_files_by_suffix((".cpp", ".h")):
         with open(filename, "r", encoding="utf8") as file:
-            include_list = [line.rstrip("\n") for line in file if re.match(r"^#include", line)]
+            include_list = [
+                line.rstrip("\n")
+                for line in file
+                if re.match(r"^#include", line)
+            ]
 
         duplicates = find_duplicate_includes(include_list)
 
@@ -142,28 +176,52 @@ def main():
 
     if extra_boosts:
         for boost in extra_boosts:
-            print(f"A new Boost dependency in the form of \"{boost}\" appears to have been introduced:")
-            print(check_output(["git", "grep", boost, "--", "*.cpp", "*.h"], text=True, encoding="utf8"))
+            print(
+                f'A new Boost dependency in the form of "{boost}" appears to have been introduced:'
+            )
+            print(
+                check_output(
+                    ["git", "grep", boost, "--", "*.cpp", "*.h"],
+                    text=True,
+                    encoding="utf8",
+                )
+            )
         exit_code = 1
 
     # Check if Boost dependencies are no longer used
     for expected_boost in EXPECTED_BOOST_INCLUDES:
         try:
-            check_output(["git", "grep", "-q", r"^#include <%s>" % expected_boost, "--", "*.cpp", "*.h"], text=True, encoding="utf8")
+            check_output(
+                [
+                    "git",
+                    "grep",
+                    "-q",
+                    r"^#include <%s>" % expected_boost,
+                    "--",
+                    "*.cpp",
+                    "*.h",
+                ],
+                text=True,
+                encoding="utf8",
+            )
         except CalledProcessError as e:
             if e.returncode > 1:
                 raise e
             else:
-                print(f"Good job! The Boost dependency \"{expected_boost}\" is no longer used. "
-                       "Please remove it from EXPECTED_BOOST_INCLUDES in test/lint/lint-includes.py "
-                       "to make sure this dependency is not accidentally reintroduced.\n")
+                print(
+                    f'Good job! The Boost dependency "{expected_boost}" is no longer used. '
+                    "Please remove it from EXPECTED_BOOST_INCLUDES in test/lint/lint-includes.py "
+                    "to make sure this dependency is not accidentally reintroduced.\n"
+                )
                 exit_code = 1
 
     # Enforce bracket syntax includes
     quote_syntax_inclusions = find_quote_syntax_inclusions()
 
     if quote_syntax_inclusions:
-        print("Please use bracket syntax includes (\"#include <foo.h>\") instead of quote syntax includes:")
+        print(
+            'Please use bracket syntax includes ("#include <foo.h>") instead of quote syntax includes:'
+        )
         for quote_syntax_inclusion in quote_syntax_inclusions:
             print(quote_syntax_inclusion)
         exit_code = 1

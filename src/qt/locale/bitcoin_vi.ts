@@ -136,8 +136,8 @@
         <translation type="unfinished">Nhập mật khẩu cũ và mật khẩu mới cho ví.</translation>
     </message>
     <message>
-        <source>Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
-        <translation type="unfinished">Xin lưu ý rằng mã hoá ví của bạn không thể bảo về hoàn toàn Bitcoin của bạn khỏi việc bị đánh cắp mới các phần mềm gián điệp nhiễm vào máy tính của bạn.</translation>
+        <source>Remember that encrypting your wallet cannot fully protect your sugarchains from being stolen by malware infecting your computer.</source>
+        <translation type="unfinished">Xin lưu ý rằng mã hoá ví của bạn không thể bảo về hoàn toàn Sugarchain của bạn khỏi việc bị đánh cắp mới các phần mềm gián điệp nhiễm vào máy tính của bạn.</translation>
     </message>
     <message>
         <source>Wallet to be encrypted</source>
@@ -200,7 +200,7 @@
     </message>
 </context>
 <context>
-    <name>BitcoinApplication</name>
+    <name>SugarchainApplication</name>
     <message>
         <source>Settings file %1 might be corrupt or invalid.</source>
         <translation type="unfinished">Tệp cài đặt %1 có thể bị hư hại hoặc không hợp lệ.</translation>
@@ -272,7 +272,7 @@
     </message>
     </context>
 <context>
-    <name>BitcoinGUI</name>
+    <name>SugarchainGUI</name>
     <message>
         <source>&amp;Overview</source>
         <translation type="unfinished">&amp;Tổng quan</translation>
@@ -339,8 +339,8 @@
         <translation type="unfinished">Proxy là &lt;b&gt; cho phép &lt;/b&gt;: %1</translation>
     </message>
     <message>
-        <source>Send coins to a Bitcoin address</source>
-        <translation type="unfinished">Gửi coin đến một địa chỉ Bitcoin</translation>
+        <source>Send coins to a Sugarchain address</source>
+        <translation type="unfinished">Gửi coin đến một địa chỉ Sugarchain</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
@@ -371,16 +371,16 @@
         <translation type="unfinished">&amp;Thay dổi Passphrase…</translation>
     </message>
     <message>
-        <source>Sign messages with your Bitcoin addresses to prove you own them</source>
-        <translation type="unfinished">Đăng ký lời nhắn với địa chỉ Bitcoin của bạn để chứng minh quyền sở hữu chúng</translation>
+        <source>Sign messages with your Sugarchain addresses to prove you own them</source>
+        <translation type="unfinished">Đăng ký lời nhắn với địa chỉ Sugarchain của bạn để chứng minh quyền sở hữu chúng</translation>
     </message>
     <message>
         <source>&amp;Verify message…</source>
         <translation type="unfinished">&amp;Xác minh tin nhắn…</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Bitcoin addresses</source>
-        <translation type="unfinished">Xác minh lời nhắn để chắc chắn đã được đăng ký với địa chỉ Bitcoin xác định</translation>
+        <source>Verify messages to ensure they were signed with specified Sugarchain addresses</source>
+        <translation type="unfinished">Xác minh lời nhắn để chắc chắn đã được đăng ký với địa chỉ Sugarchain xác định</translation>
     </message>
     <message>
         <source>Close Wallet…</source>
@@ -433,16 +433,16 @@
         </translation>
     </message>
     <message>
-        <source>Load Partially Signed Bitcoin Transaction</source>
-        <translation type="unfinished">Tải một phần giao dịch Bitcoin đã ký</translation>
+        <source>Load Partially Signed Sugarchain Transaction</source>
+        <translation type="unfinished">Tải một phần giao dịch Sugarchain đã ký</translation>
     </message>
     <message>
         <source>Load PSBT from &amp;clipboard…</source>
         <translation type="unfinished">Tải PSBT từ &amp;khay nhớ tạm…</translation>
     </message>
     <message>
-        <source>Load Partially Signed Bitcoin Transaction from clipboard</source>
-        <translation type="unfinished">Tải một phần giao dịch Bitcoin đã ký từ khay nhớ tạm</translation>
+        <source>Load Partially Signed Sugarchain Transaction from clipboard</source>
+        <translation type="unfinished">Tải một phần giao dịch Sugarchain đã ký từ khay nhớ tạm</translation>
     </message>
     <message>
         <source>Node window</source>
@@ -461,8 +461,8 @@
         <translation type="unfinished">Các địa chỉ đang &amp;nhận</translation>
     </message>
     <message>
-        <source>Open a bitcoin: URI</source>
-        <translation type="unfinished">Mở một bitcoin: URI</translation>
+        <source>Open a sugarchain: URI</source>
+        <translation type="unfinished">Mở một sugarchain: URI</translation>
     </message>
     <message>
         <source>Open Wallet</source>
@@ -491,8 +491,8 @@
         <translation type="unfinished">Đóng tất cả ví</translation>
     </message>
     <message>
-        <source>Show the %1 help message to get a list with possible Bitcoin command-line options</source>
-        <translation type="unfinished">Hiển thị %1 tin nhắn hỗ trợ để nhận được danh sách Bitcoin command-line khả dụng</translation>
+        <source>Show the %1 help message to get a list with possible Sugarchain command-line options</source>
+        <translation type="unfinished">Hiển thị %1 tin nhắn hỗ trợ để nhận được danh sách Sugarchain command-line khả dụng</translation>
     </message>
     <message>
         <source>default wallet</source>
@@ -525,10 +525,10 @@
         <translation type="unfinished">Trìn&amp;h diễn</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Bitcoin network.</source>
+        <source>%n active connection(s) to Sugarchain network.</source>
         <extracomment>A substring of the tooltip.</extracomment>
         <translation type="unfinished">
-            <numerusform>%nkết nối đang hoạt động với mạng lưới Bitcoin</numerusform>
+            <numerusform>%nkết nối đang hoạt động với mạng lưới Sugarchain</numerusform>
         </translation>
     </message>
     <message>
@@ -1072,9 +1072,9 @@
         <translation type="unfinished">Bạn có muốn tạo giao dịch này không?</translation>
     </message>
     <message>
-        <source>Please, review your transaction. You can create and send this transaction or create a Partially Signed Bitcoin Transaction (PSBT), which you can save or copy and then sign with, e.g., an offline %1 wallet, or a PSBT-compatible hardware wallet.</source>
+        <source>Please, review your transaction. You can create and send this transaction or create a Partially Signed Sugarchain Transaction (PSBT), which you can save or copy and then sign with, e.g., an offline %1 wallet, or a PSBT-compatible hardware wallet.</source>
         <extracomment>Text to inform a user attempting to create a transaction of their current options. At this stage, a user can send their transaction or create a PSBT. This string is displayed when both private keys and PSBT controls are enabled.</extracomment>
-        <translation type="unfinished">Vui lòng xem lại giao dịch của bạn. Bạn có thể tạo và gửi giao dịch này hoặc tạo Giao dịch Bitcoin được ký một phần (PSBT), bạn có thể lưu hoặc sao chép và sau đó ký bằng, ví dụ: ví %1 ngoại tuyến hoặc ví phần cứng tương thích với PSBT.</translation>
+        <translation type="unfinished">Vui lòng xem lại giao dịch của bạn. Bạn có thể tạo và gửi giao dịch này hoặc tạo Giao dịch Sugarchain được ký một phần (PSBT), bạn có thể lưu hoặc sao chép và sau đó ký bằng, ví dụ: ví %1 ngoại tuyến hoặc ví phần cứng tương thích với PSBT.</translation>
     </message>
     <message>
         <source>Unsigned Transaction</source>
@@ -1202,7 +1202,7 @@
     </message>
     </context>
 <context>
-    <name>bitcoin-core</name>
+    <name>sugarchain-core</name>
     <message>
         <source>Error reading %s! Transaction data may be missing or incorrect. Rescanning wallet.</source>
         <translation type="unfinished">Lỗi khi đọc%s! Dữ liệu giao dịch có thể bị thiếu hoặc không chính xác. Đang quét lại ví.</translation>

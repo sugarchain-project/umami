@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-# Copyright (c) 2019-2021 The Bitcoin Core developers
+# Copyright (c) 2019-2021 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-"""Test bitcoind aborts if can't disconnect a block.
+"""Test sugarchaind aborts if can't disconnect a block.
 
 - Start a single node and generate 3 blocks.
 - Delete the undo data.
 - Mine a fork that requires disconnecting the tip.
-- Verify that bitcoind AbortNode's.
+- Verify that sugarchaind AbortNode's.
 """
 
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import get_datadir_path
 import os
 
 
-class AbortNodeTest(BitcoinTestFramework):
+class AbortNodeTest(SugarchainTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2
@@ -29,7 +29,7 @@ class AbortNodeTest(BitcoinTestFramework):
         datadir = get_datadir_path(self.options.tmpdir, 0)
 
         # Deleting the undo file will result in reorg failure
-        os.unlink(os.path.join(datadir, self.chain, 'blocks', 'rev00000.dat'))
+        os.unlink(os.path.join(datadir, self.chain, "blocks", "rev00000.dat"))
 
         # Connecting to a node with a more work chain will trigger a reorg
         # attempt.
@@ -45,5 +45,5 @@ class AbortNodeTest(BitcoinTestFramework):
         self.nodes[0].assert_start_raises_init_error()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     AbortNodeTest().main()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021-2022 The Bitcoin Core developers
+# Copyright (c) 2021-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -33,9 +33,9 @@ ALLOWED_EXECUTABLE_SHEBANG = {
 
 class FileMeta(object):
     def __init__(self, file_spec: str):
-        '''Parse a `git ls files --stage` output line.'''
+        """Parse a `git ls files --stage` output line."""
         # 100755 5a150d5f8031fcd75e80a4dd9843afa33655f579 0       ci/test/00_setup_env.sh
-        meta, self.file_path = file_spec.split('\t', 2)
+        meta, self.file_path = file_spec.split("\t", 2)
         meta = meta.split()
         # The octal file permission of the file. Internally, git only
         # keeps an 'executable' bit, so this will always be 0o644 or 0o755.
@@ -70,15 +70,18 @@ class FileMeta(object):
 
 
 def get_git_file_metadata() -> Dict[str, FileMeta]:
-    '''
+    """
     Return a dictionary mapping the name of all files in the repository to git tree metadata.
-    '''
-    files_raw = check_output(CMD_ALL_FILES).decode("utf8").rstrip("\0").split("\0")
+    """
+    files_raw = (
+        check_output(CMD_ALL_FILES).decode("utf8").rstrip("\0").split("\0")
+    )
     files = {}
     for file_spec in files_raw:
         meta = FileMeta(file_spec)
         files[meta.file_path] = meta
     return files
+
 
 def check_all_filenames(files) -> int:
     """
@@ -104,12 +107,20 @@ def check_source_filenames(files) -> int:
 
     Additionally there is an exception regexp for directories or files which are excepted from matching this regexp.
     """
-    filenames = [filename for filename in files.keys() if re.match(ALL_SOURCE_FILENAMES_REGEXP, filename, re.IGNORECASE)]
+    filenames = [
+        filename
+        for filename in files.keys()
+        if re.match(ALL_SOURCE_FILENAMES_REGEXP, filename, re.IGNORECASE)
+    ]
     filename_regex = re.compile(ALLOWED_SOURCE_FILENAME_REGEXP)
-    filename_exception_regex = re.compile(ALLOWED_SOURCE_FILENAME_EXCEPTION_REGEXP)
+    filename_exception_regex = re.compile(
+        ALLOWED_SOURCE_FILENAME_EXCEPTION_REGEXP
+    )
     failed_tests = 0
     for filename in filenames:
-        if not filename_regex.match(filename) and not filename_exception_regex.match(filename):
+        if not filename_regex.match(
+            filename
+        ) and not filename_exception_regex.match(filename):
             print(
                 f"""File {repr(filename)} does not not match the allowed source filename regexp ('{ALLOWED_SOURCE_FILENAME_REGEXP}'), or the exception regexp ({ALLOWED_SOURCE_FILENAME_EXCEPTION_REGEXP})."""
             )
@@ -139,13 +150,18 @@ def check_all_file_permissions(files) -> int:
             # For certain file extensions that have been defined, we also check that the shebang conforms to a specific
             # allowable set of shebangs
             if file_meta.extension in ALLOWED_EXECUTABLE_SHEBANG.keys():
-                if shebang not in ALLOWED_EXECUTABLE_SHEBANG[file_meta.extension]:
+                if (
+                    shebang
+                    not in ALLOWED_EXECUTABLE_SHEBANG[file_meta.extension]
+                ):
                     print(
                         f"""File "{filename}" is missing expected shebang """
                         + " or ".join(
                             [
                                 x.decode("utf-8")
-                                for x in ALLOWED_EXECUTABLE_SHEBANG[file_meta.extension]
+                                for x in ALLOWED_EXECUTABLE_SHEBANG[
+                                    file_meta.extension
+                                ]
                             ]
                         )
                     )
@@ -166,11 +182,15 @@ def check_shebang_file_permissions(files_meta) -> int:
     """
     Checks every file that contains a shebang line to ensure it has an executable permission
     """
-    filenames = check_output(CMD_SHEBANG_FILES).decode("utf8").strip().split("\n")
+    filenames = (
+        check_output(CMD_SHEBANG_FILES).decode("utf8").strip().split("\n")
+    )
 
     # The git grep command we use returns files which contain a shebang on any line within the file
     # so we need to filter the list to only files with the shebang on the first line
-    filenames = [filename.split(":1:")[0] for filename in filenames if ":1:" in filename]
+    filenames = [
+        filename.split(":1:")[0] for filename in filenames if ":1:" in filename
+    ]
 
     failed_tests = 0
     for filename in filenames:
@@ -184,7 +204,9 @@ def check_shebang_file_permissions(files_meta) -> int:
             if file_meta.extension == "py":
                 with open(filename, "r", encoding="utf8") as f:
                     file_data = f.read()
-                if not re.search("""if __name__ == ['"]__main__['"]:""", file_data):
+                if not re.search(
+                    """if __name__ == ['"]__main__['"]:""", file_data
+                ):
                     continue
 
             print(

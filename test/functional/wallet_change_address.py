@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2023 The Bitcoin Core developers
+# Copyright (c) 2023 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test wallet change address selection"""
@@ -7,13 +7,13 @@
 import re
 
 from test_framework.blocktools import COINBASE_MATURITY
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import (
     assert_equal,
 )
 
 
-class WalletChangeAddressTest(BitcoinTestFramework):
+class WalletChangeAddressTest(SugarchainTestFramework):
     def add_options(self, parser):
         self.add_wallet_options(parser)
 
@@ -24,7 +24,7 @@ class WalletChangeAddressTest(BitcoinTestFramework):
         self.extra_args = [
             [],
             ["-discardfee=1"],
-            ["-avoidpartialspends", "-discardfee=1"]
+            ["-avoidpartialspends", "-discardfee=1"],
         ]
 
     def skip_test_if_missing_module(self):
@@ -34,8 +34,8 @@ class WalletChangeAddressTest(BitcoinTestFramework):
         change_index = None
         for vout in tx["vout"]:
             info = node.getaddressinfo(vout["scriptPubKey"]["address"])
-            if (info["ismine"] and info["ischange"]):
-                change_index = int(re.findall(r'\d+', info["hdkeypath"])[-1])
+            if info["ismine"] and info["ischange"]:
+                change_index = int(re.findall(r"\d+", info["hdkeypath"])[-1])
                 break
         assert_equal(change_index, index)
 
@@ -43,7 +43,7 @@ class WalletChangeAddressTest(BitcoinTestFramework):
         change_pos = None
         for index, output in enumerate(tx["vout"]):
             info = wallet.getaddressinfo(output["scriptPubKey"]["address"])
-            if (info["ismine"] and info["ischange"]):
+            if info["ismine"] and info["ischange"]:
                 change_pos = index
                 break
         assert_equal(change_pos, pos)
@@ -65,8 +65,12 @@ class WalletChangeAddressTest(BitcoinTestFramework):
 
         for i in range(20):
             for n in [1, 2]:
-                self.log.debug(f"Send transaction from node {n}: expected change index {i}")
-                txid = self.nodes[n].sendtoaddress(self.nodes[0].getnewaddress(), 0.2)
+                self.log.debug(
+                    f"Send transaction from node {n}: expected change index {i}"
+                )
+                txid = self.nodes[n].sendtoaddress(
+                    self.nodes[0].getnewaddress(), 0.2
+                )
                 tx = self.nodes[n].getrawtransaction(txid, True)
                 # find the change output and ensure that expected change index was used
                 self.assert_change_index(self.nodes[n], tx, i)
@@ -90,7 +94,10 @@ class WalletChangeAddressTest(BitcoinTestFramework):
 
         # The avoid partial spends wallet will always create a change output
         node = self.nodes[2]
-        res = w2.send({sendTo1: "1.0", sendTo2: "1.0", sendTo3: "0.9999"}, options={"change_position": 0})
+        res = w2.send(
+            {sendTo1: "1.0", sendTo2: "1.0", sendTo3: "0.9999"},
+            options={"change_position": 0},
+        )
         tx = node.getrawtransaction(res["txid"], True)
         self.assert_change_pos(w2, tx, 0)
 
@@ -98,11 +105,15 @@ class WalletChangeAddressTest(BitcoinTestFramework):
         # then create a second candidate using APS that requires a change output.
         # Ensure that the user-configured change position is kept
         node = self.nodes[1]
-        res = w1.send({sendTo1: "1.0", sendTo2: "1.0", sendTo3: "0.9999"}, options={"change_position": 0})
+        res = w1.send(
+            {sendTo1: "1.0", sendTo2: "1.0", sendTo3: "0.9999"},
+            options={"change_position": 0},
+        )
         tx = node.getrawtransaction(res["txid"], True)
         # If the wallet ignores the user's change_position there is still a 25%
         # that the random change position passes the test
         self.assert_change_pos(w1, tx, 0)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     WalletChangeAddressTest().main()

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# Copyright (c) 2017-2021 The Bitcoin Core developers
+# Copyright (c) 2017-2021 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test a pre-segwit node upgrading to segwit consensus"""
 
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import (
     assert_equal,
     softfork_active,
@@ -12,7 +12,7 @@ from test_framework.util import (
 import os
 
 
-class SegwitUpgradeTest(BitcoinTestFramework):
+class SegwitUpgradeTest(SugarchainTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 1
@@ -21,7 +21,9 @@ class SegwitUpgradeTest(BitcoinTestFramework):
     def run_test(self):
         """A pre-segwit node with insufficiently validated blocks needs to redownload blocks"""
 
-        self.log.info("Testing upgrade behaviour for pre-segwit node to segwit rules")
+        self.log.info(
+            "Testing upgrade behaviour for pre-segwit node to segwit rules"
+        )
         node = self.nodes[0]
 
         # Node hasn't been used or connected yet
@@ -44,7 +46,9 @@ class SegwitUpgradeTest(BitcoinTestFramework):
         )
 
         # As directed, the user restarts the node with -reindex
-        self.start_node(0, extra_args=["-reindex", "-testactivationheight=segwit@5"])
+        self.start_node(
+            0, extra_args=["-reindex", "-testactivationheight=segwit@5"]
+        )
 
         # With the segwit consensus rules, the node is able to validate only up to block 4
         assert_equal(node.getblockcount(), 4)
@@ -53,5 +57,5 @@ class SegwitUpgradeTest(BitcoinTestFramework):
         assert softfork_active(node, "segwit")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     SegwitUpgradeTest().main()

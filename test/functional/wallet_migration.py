@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020-2022 The Bitcoin Core developers
+# Copyright (c) 2020-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test Migrating a wallet from legacy to descriptor."""
@@ -7,7 +7,7 @@
 import os
 import random
 from test_framework.descriptors import descsum_create
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import (
     assert_equal,
     assert_raises_rpc_error,
@@ -18,7 +18,7 @@ from test_framework.wallet_util import (
 )
 
 
-class WalletMigrationTest(BitcoinTestFramework):
+class WalletMigrationTest(SugarchainTestFramework):
     def add_options(self, parser):
         self.add_wallet_options(parser)
 
@@ -34,14 +34,26 @@ class WalletMigrationTest(BitcoinTestFramework):
         self.skip_if_no_bdb()
 
     def assert_is_sqlite(self, wallet_name):
-        wallet_file_path = os.path.join(self.nodes[0].datadir, "regtest/wallets", wallet_name, self.wallet_data_filename)
-        with open(wallet_file_path, 'rb') as f:
+        wallet_file_path = os.path.join(
+            self.nodes[0].datadir,
+            "regtest/wallets",
+            wallet_name,
+            self.wallet_data_filename,
+        )
+        with open(wallet_file_path, "rb") as f:
             file_magic = f.read(16)
-            assert_equal(file_magic, b'SQLite format 3\x00')
-        assert_equal(self.nodes[0].get_wallet_rpc(wallet_name).getwalletinfo()["format"], "sqlite")
+            assert_equal(file_magic, b"SQLite format 3\x00")
+        assert_equal(
+            self.nodes[0].get_wallet_rpc(wallet_name).getwalletinfo()["format"],
+            "sqlite",
+        )
 
     def create_legacy_wallet(self, wallet_name, disable_private_keys=False):
-        self.nodes[0].createwallet(wallet_name=wallet_name, descriptors=False, disable_private_keys=disable_private_keys)
+        self.nodes[0].createwallet(
+            wallet_name=wallet_name,
+            descriptors=False,
+            disable_private_keys=disable_private_keys,
+        )
         wallet = self.nodes[0].get_wallet_rpc(wallet_name)
         info = wallet.getwalletinfo()
         assert_equal(info["descriptors"], False)
@@ -56,7 +68,10 @@ class WalletMigrationTest(BitcoinTestFramework):
         assert_equal(addr_info["hdkeypath"], addr_info_old["hdkeypath"])
         assert_equal(addr_info["solvable"], addr_info_old["solvable"])
         assert_equal(addr_info["ischange"], addr_info_old["ischange"])
-        assert_equal(addr_info["hdmasterfingerprint"], addr_info_old["hdmasterfingerprint"])
+        assert_equal(
+            addr_info["hdmasterfingerprint"],
+            addr_info_old["hdmasterfingerprint"],
+        )
 
     def assert_list_txs_equal(self, received_list_txs, expected_list_txs):
         for d in received_list_txs:
@@ -70,7 +85,9 @@ class WalletMigrationTest(BitcoinTestFramework):
     def test_basic(self):
         default = self.nodes[0].get_wallet_rpc(self.default_wallet_name)
 
-        self.log.info("Test migration of a basic keys only wallet without balance")
+        self.log.info(
+            "Test migration of a basic keys only wallet without balance"
+        )
         basic0 = self.create_legacy_wallet("basic0")
 
         addr = basic0.getnewaddress()
@@ -109,7 +126,9 @@ class WalletMigrationTest(BitcoinTestFramework):
         addr_info = basic0.getaddressinfo(basic0.getnewaddress("", "bech32"))
         assert_equal(addr_info["hdkeypath"], "m/84'/1'/0'/0/0")
 
-        self.log.info("Test migration of a basic keys only wallet with a balance")
+        self.log.info(
+            "Test migration of a basic keys only wallet with a balance"
+        )
         basic1 = self.create_legacy_wallet("basic1")
 
         for _ in range(0, 10):
@@ -140,7 +159,9 @@ class WalletMigrationTest(BitcoinTestFramework):
         assert_equal(basic1.getbalance(), bal)
         self.assert_list_txs_equal(basic1.listtransactions(), txs)
 
-        self.log.info("Test migration of a wallet with balance received on the seed")
+        self.log.info(
+            "Test migration of a wallet with balance received on the seed"
+        )
         basic2 = self.create_legacy_wallet("basic2")
         basic2_seed = get_generate_key()
         basic2.sethdseed(True, basic2_seed.privkey)
@@ -148,7 +169,11 @@ class WalletMigrationTest(BitcoinTestFramework):
 
         # Receive coins on different output types for the same seed
         basic2_balance = 0
-        for addr in [basic2_seed.p2pkh_addr, basic2_seed.p2wpkh_addr, basic2_seed.p2sh_p2wpkh_addr]:
+        for addr in [
+            basic2_seed.p2pkh_addr,
+            basic2_seed.p2wpkh_addr,
+            basic2_seed.p2sh_p2wpkh_addr,
+        ]:
             send_value = random.randint(1, 4)
             default.sendtoaddress(addr, send_value)
             basic2_balance += send_value
@@ -164,8 +189,14 @@ class WalletMigrationTest(BitcoinTestFramework):
         self.assert_list_txs_equal(basic2.listtransactions(), basic2_txs)
 
         # Now test migration on a descriptor wallet
-        self.log.info("Test \"nothing to migrate\" when the user tries to migrate a wallet with no legacy data")
-        assert_raises_rpc_error(-4, "Error: This wallet is already a descriptor wallet", basic2.migratewallet)
+        self.log.info(
+            'Test "nothing to migrate" when the user tries to migrate a wallet with no legacy data'
+        )
+        assert_raises_rpc_error(
+            -4,
+            "Error: This wallet is already a descriptor wallet",
+            basic2.migratewallet,
+        )
 
     def test_multisig(self):
         default = self.nodes[0].get_wallet_rpc(self.default_wallet_name)
@@ -185,17 +216,27 @@ class WalletMigrationTest(BitcoinTestFramework):
         ms_addr_info = multisig0.getaddressinfo(ms_info["address"])
         assert_equal(ms_addr_info["ismine"], True)
         assert_equal(ms_addr_info["desc"], ms_info["descriptor"])
-        assert_equal("multisig0_watchonly" in self.nodes[0].listwallets(), False)
-        assert_equal("multisig0_solvables" in self.nodes[0].listwallets(), False)
+        assert_equal(
+            "multisig0_watchonly" in self.nodes[0].listwallets(), False
+        )
+        assert_equal(
+            "multisig0_solvables" in self.nodes[0].listwallets(), False
+        )
 
         pub1 = multisig0.getaddressinfo(addr1)["pubkey"]
         pub2 = multisig0.getaddressinfo(addr2)["pubkey"]
 
         # Some keys in multisig do not belong to this wallet
-        self.log.info("Test migration of a wallet that has some keys in a multisig")
+        self.log.info(
+            "Test migration of a wallet that has some keys in a multisig"
+        )
         multisig1 = self.create_legacy_wallet("multisig1")
-        ms_info = multisig1.addmultisigaddress(2, [multisig1.getnewaddress(), pub1, pub2])
-        ms_info2 = multisig1.addmultisigaddress(2, [multisig1.getnewaddress(), pub1, pub2])
+        ms_info = multisig1.addmultisigaddress(
+            2, [multisig1.getnewaddress(), pub1, pub2]
+        )
+        ms_info2 = multisig1.addmultisigaddress(
+            2, [multisig1.getnewaddress(), pub1, pub2]
+        )
 
         addr1 = ms_info["address"]
         addr2 = ms_info2["address"]
@@ -220,15 +261,20 @@ class WalletMigrationTest(BitcoinTestFramework):
         assert_equal(multisig1.getaddressinfo(addr1)["ismine"], False)
         assert_equal(multisig1.getaddressinfo(addr1)["iswatchonly"], False)
         assert_equal(multisig1.getaddressinfo(addr1)["solvable"], False)
-        assert_raises_rpc_error(-5, "Invalid or non-wallet transaction id", multisig1.gettransaction, txid)
+        assert_raises_rpc_error(
+            -5,
+            "Invalid or non-wallet transaction id",
+            multisig1.gettransaction,
+            txid,
+        )
         assert_equal(multisig1.getbalance(), 0)
         assert_equal(multisig1.listtransactions(), [])
 
         assert_equal("multisig1_watchonly" in self.nodes[0].listwallets(), True)
         ms1_watchonly = self.nodes[0].get_wallet_rpc("multisig1_watchonly")
         ms1_wallet_info = ms1_watchonly.getwalletinfo()
-        assert_equal(ms1_wallet_info['descriptors'], True)
-        assert_equal(ms1_wallet_info['private_keys_enabled'], False)
+        assert_equal(ms1_wallet_info["descriptors"], True)
+        assert_equal(ms1_wallet_info["private_keys_enabled"], False)
         self.assert_is_sqlite("multisig1_watchonly")
         assert_equal(ms1_watchonly.getaddressinfo(addr1)["ismine"], True)
         assert_equal(ms1_watchonly.getaddressinfo(addr1)["solvable"], True)
@@ -244,8 +290,8 @@ class WalletMigrationTest(BitcoinTestFramework):
         assert_equal("multisig1_solvables" in self.nodes[0].listwallets(), True)
         ms1_solvable = self.nodes[0].get_wallet_rpc("multisig1_solvables")
         ms1_wallet_info = ms1_solvable.getwalletinfo()
-        assert_equal(ms1_wallet_info['descriptors'], True)
-        assert_equal(ms1_wallet_info['private_keys_enabled'], False)
+        assert_equal(ms1_wallet_info["descriptors"], True)
+        assert_equal(ms1_wallet_info["private_keys_enabled"], False)
         self.assert_is_sqlite("multisig1_solvables")
         assert_equal(ms1_solvable.getaddressinfo(addr1)["ismine"], False)
         assert_equal(ms1_solvable.getaddressinfo(addr1)["solvable"], False)
@@ -253,7 +299,6 @@ class WalletMigrationTest(BitcoinTestFramework):
         assert_equal(ms1_solvable.getaddressinfo(addr2)["solvable"], True)
         assert_equal(ms1_solvable.getbalance(), 0)
         assert_equal(ms1_solvable.listtransactions(), [])
-
 
     def test_other_watchonly(self):
         default = self.nodes[0].get_wallet_rpc(self.default_wallet_name)
@@ -279,9 +324,23 @@ class WalletMigrationTest(BitcoinTestFramework):
         # Received watchonly tx that is then spent
         import_sent_addr = default.getnewaddress()
         imports0.importaddress(import_sent_addr)
-        received_sent_watchonly_txid = default.sendtoaddress(import_sent_addr, 10)
-        received_sent_watchonly_vout = find_vout_for_address(self.nodes[0], received_sent_watchonly_txid, import_sent_addr)
-        send = default.sendall(recipients=[default.getnewaddress()], options={"inputs": [{"txid": received_sent_watchonly_txid, "vout": received_sent_watchonly_vout}]})
+        received_sent_watchonly_txid = default.sendtoaddress(
+            import_sent_addr, 10
+        )
+        received_sent_watchonly_vout = find_vout_for_address(
+            self.nodes[0], received_sent_watchonly_txid, import_sent_addr
+        )
+        send = default.sendall(
+            recipients=[default.getnewaddress()],
+            options={
+                "inputs": [
+                    {
+                        "txid": received_sent_watchonly_txid,
+                        "vout": received_sent_watchonly_vout,
+                    }
+                ]
+            },
+        )
         sent_watchonly_txid = send["txid"]
 
         self.generate(self.nodes[0], 1)
@@ -295,9 +354,24 @@ class WalletMigrationTest(BitcoinTestFramework):
         imports0.migratewallet()
         assert_equal(imports0.getwalletinfo()["descriptors"], True)
         self.assert_is_sqlite("imports0")
-        assert_raises_rpc_error(-5, "Invalid or non-wallet transaction id", imports0.gettransaction, received_watchonly_txid)
-        assert_raises_rpc_error(-5, "Invalid or non-wallet transaction id", imports0.gettransaction, received_sent_watchonly_txid)
-        assert_raises_rpc_error(-5, "Invalid or non-wallet transaction id", imports0.gettransaction, sent_watchonly_txid)
+        assert_raises_rpc_error(
+            -5,
+            "Invalid or non-wallet transaction id",
+            imports0.gettransaction,
+            received_watchonly_txid,
+        )
+        assert_raises_rpc_error(
+            -5,
+            "Invalid or non-wallet transaction id",
+            imports0.gettransaction,
+            received_sent_watchonly_txid,
+        )
+        assert_raises_rpc_error(
+            -5,
+            "Invalid or non-wallet transaction id",
+            imports0.gettransaction,
+            sent_watchonly_txid,
+        )
         assert_equal(len(imports0.listtransactions(include_watchonly=True)), 1)
         imports0.gettransaction(received_txid)
         assert_equal(imports0.getbalance(), spendable_bal)
@@ -312,7 +386,12 @@ class WalletMigrationTest(BitcoinTestFramework):
         watchonly.gettransaction(received_sent_watchonly_txid)
         watchonly.gettransaction(sent_watchonly_txid)
         assert_equal(watchonly.getbalance(), watchonly_bal)
-        assert_raises_rpc_error(-5, "Invalid or non-wallet transaction id", watchonly.gettransaction, received_txid)
+        assert_raises_rpc_error(
+            -5,
+            "Invalid or non-wallet transaction id",
+            watchonly.gettransaction,
+            received_txid,
+        )
         assert_equal(len(watchonly.listtransactions(include_watchonly=True)), 3)
 
         # Check that labels were migrated and persisted to watchonly wallet
@@ -327,47 +406,60 @@ class WalletMigrationTest(BitcoinTestFramework):
 
         # Migrating an actual watchonly wallet should not create a new watchonly wallet
         self.log.info("Test migration of a pure watchonly wallet")
-        watchonly0 = self.create_legacy_wallet("watchonly0", disable_private_keys=True)
+        watchonly0 = self.create_legacy_wallet(
+            "watchonly0", disable_private_keys=True
+        )
 
         addr = default.getnewaddress()
         desc = default.getaddressinfo(addr)["desc"]
-        res = watchonly0.importmulti([
-            {
-                "desc": desc,
-                "watchonly": True,
-                "timestamp": "now",
-            }])
-        assert_equal(res[0]['success'], True)
+        res = watchonly0.importmulti(
+            [
+                {
+                    "desc": desc,
+                    "watchonly": True,
+                    "timestamp": "now",
+                }
+            ]
+        )
+        assert_equal(res[0]["success"], True)
         default.sendtoaddress(addr, 10)
         self.generate(self.nodes[0], 1)
 
         watchonly0.migratewallet()
-        assert_equal("watchonly0_watchonly" in self.nodes[0].listwallets(), False)
+        assert_equal(
+            "watchonly0_watchonly" in self.nodes[0].listwallets(), False
+        )
         info = watchonly0.getwalletinfo()
         assert_equal(info["descriptors"], True)
         assert_equal(info["private_keys_enabled"], False)
         self.assert_is_sqlite("watchonly0")
 
         # Migrating a wallet with pubkeys added to the keypool
-        self.log.info("Test migration of a pure watchonly wallet with pubkeys in keypool")
-        watchonly1 = self.create_legacy_wallet("watchonly1", disable_private_keys=True)
+        self.log.info(
+            "Test migration of a pure watchonly wallet with pubkeys in keypool"
+        )
+        watchonly1 = self.create_legacy_wallet(
+            "watchonly1", disable_private_keys=True
+        )
 
         addr1 = default.getnewaddress(address_type="bech32")
         addr2 = default.getnewaddress(address_type="bech32")
         desc1 = default.getaddressinfo(addr1)["desc"]
         desc2 = default.getaddressinfo(addr2)["desc"]
-        res = watchonly1.importmulti([
-            {
-                "desc": desc1,
-                "keypool": True,
-                "timestamp": "now",
-            },
-            {
-                "desc": desc2,
-                "keypool": True,
-                "timestamp": "now",
-            }
-        ])
+        res = watchonly1.importmulti(
+            [
+                {
+                    "desc": desc1,
+                    "keypool": True,
+                    "timestamp": "now",
+                },
+                {
+                    "desc": desc2,
+                    "keypool": True,
+                    "timestamp": "now",
+                },
+            ]
+        )
         assert_equal(res[0]["success"], True)
         assert_equal(res[1]["success"], True)
         # Before migrating, we can fetch addr1 from the keypool
@@ -379,7 +471,11 @@ class WalletMigrationTest(BitcoinTestFramework):
         assert_equal(info["private_keys_enabled"], False)
         self.assert_is_sqlite("watchonly1")
         # After migrating, the "keypool" is empty
-        assert_raises_rpc_error(-4, "Error: This wallet has no available keys", watchonly1.getnewaddress)
+        assert_raises_rpc_error(
+            -4,
+            "Error: This wallet has no available keys",
+            watchonly1.getnewaddress,
+        )
 
     def test_pk_coinbases(self):
         self.log.info("Test migration of a wallet using old pk() coinbases")
@@ -408,9 +504,25 @@ class WalletMigrationTest(BitcoinTestFramework):
         self.generate(self.nodes[0], 1)
         bals = wallet.getbalances()
 
-        assert_raises_rpc_error(-4, "Error: Wallet decryption failed, the wallet passphrase was not provided or was incorrect", wallet.migratewallet)
-        assert_raises_rpc_error(-4, "Error: Wallet decryption failed, the wallet passphrase was not provided or was incorrect", wallet.migratewallet, None, "badpass")
-        assert_raises_rpc_error(-4, "The passphrase contains a null character", wallet.migratewallet, None, "pass\0with\0null")
+        assert_raises_rpc_error(
+            -4,
+            "Error: Wallet decryption failed, the wallet passphrase was not provided or was incorrect",
+            wallet.migratewallet,
+        )
+        assert_raises_rpc_error(
+            -4,
+            "Error: Wallet decryption failed, the wallet passphrase was not provided or was incorrect",
+            wallet.migratewallet,
+            None,
+            "badpass",
+        )
+        assert_raises_rpc_error(
+            -4,
+            "The passphrase contains a null character",
+            wallet.migratewallet,
+            None,
+            "pass\0with\0null",
+        )
 
         wallet.migratewallet(passphrase="pass")
 
@@ -434,8 +546,17 @@ class WalletMigrationTest(BitcoinTestFramework):
 
         wallet.unloadwallet()
 
-        assert_raises_rpc_error(-8, "RPC endpoint wallet and wallet_name parameter specify different wallets", wallet.migratewallet, "someotherwallet")
-        assert_raises_rpc_error(-8, "Either RPC endpoint wallet or wallet_name parameter must be provided", self.nodes[0].migratewallet)
+        assert_raises_rpc_error(
+            -8,
+            "RPC endpoint wallet and wallet_name parameter specify different wallets",
+            wallet.migratewallet,
+            "someotherwallet",
+        )
+        assert_raises_rpc_error(
+            -8,
+            "Either RPC endpoint wallet or wallet_name parameter must be provided",
+            self.nodes[0].migratewallet,
+        )
         self.nodes[0].migratewallet("notloaded")
 
         info = wallet.getwalletinfo()
@@ -446,7 +567,9 @@ class WalletMigrationTest(BitcoinTestFramework):
         assert_equal(bals, wallet.getbalances())
 
     def test_unloaded_by_path(self):
-        self.log.info("Test migration of a wallet that isn't loaded, specified by path")
+        self.log.info(
+            "Test migration of a wallet that isn't loaded, specified by path"
+        )
         wallet = self.create_legacy_wallet("notloaded2")
         default = self.nodes[0].get_wallet_rpc(self.default_wallet_name)
 
@@ -457,7 +580,9 @@ class WalletMigrationTest(BitcoinTestFramework):
 
         wallet.unloadwallet()
 
-        wallet_file_path = os.path.join(self.nodes[0].datadir, "regtest", "wallets", "notloaded2")
+        wallet_file_path = os.path.join(
+            self.nodes[0].datadir, "regtest", "wallets", "notloaded2"
+        )
         self.nodes[0].migratewallet(wallet_file_path)
 
         # Because we gave the name by full path, the loaded wallet's name is that path too.
@@ -483,5 +608,6 @@ class WalletMigrationTest(BitcoinTestFramework):
         self.test_unloaded()
         self.test_unloaded_by_path()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     WalletMigrationTest().main()

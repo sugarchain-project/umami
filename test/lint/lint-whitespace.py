@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2017-2022 The Bitcoin Core developers
+# Copyright (c) 2017-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
@@ -16,14 +16,17 @@ import sys
 
 from subprocess import check_output
 
-EXCLUDED_DIRS = ["depends/patches/",
-                 "contrib/guix/patches/",
-                 "src/leveldb/",
-                 "src/crc32c/",
-                 "src/secp256k1/",
-                 "src/minisketch/",
-                 "doc/release-notes/",
-                 "src/qt/locale"]
+EXCLUDED_DIRS = [
+    "depends/patches/",
+    "contrib/guix/patches/",
+    "src/leveldb/",
+    "src/crc32c/",
+    "src/secp256k1/",
+    "src/minisketch/",
+    "doc/release-notes/",
+    "src/qt/locale",
+]
+
 
 def parse_args():
     """Parse command line arguments."""
@@ -38,9 +41,15 @@ def parse_args():
             environment variable (e.g. "COMMIT_RANGE='47ba2c3...ee50c9e'
             {sys.argv[0]}"). Defaults to current merge base when neither
             prev-commits nor the environment variable is set.
-        """)
+        """,
+    )
 
-    parser.add_argument("--prev-commits", "-p", required=False, help="The previous n commits to check")
+    parser.add_argument(
+        "--prev-commits",
+        "-p",
+        required=False,
+        help="The previous n commits to check",
+    )
 
     return parser.parse_args()
 
@@ -80,7 +89,11 @@ def get_diff(commit_range, check_only_code):
     else:
         what_files = ["."]
 
-    diff = check_output(["git", "diff", "-U0", commit_range, "--"] + what_files + exclude_args, text=True, encoding="utf8")
+    diff = check_output(
+        ["git", "diff", "-U0", commit_range, "--"] + what_files + exclude_args,
+        text=True,
+        encoding="utf8",
+    )
 
     return diff
 
@@ -93,7 +106,11 @@ def main():
             commit_range = "HEAD~" + args.prev_commits + "...HEAD"
         else:
             # This assumes that the target branch of the pull request will be master.
-            merge_base = check_output(["git", "merge-base", "HEAD", "master"], text=True, encoding="utf8").rstrip("\n")
+            merge_base = check_output(
+                ["git", "merge-base", "HEAD", "master"],
+                text=True,
+                encoding="utf8",
+            ).rstrip("\n")
             commit_range = merge_base + "..HEAD"
     else:
         commit_range = os.getenv("COMMIT_RANGE")
@@ -108,7 +125,9 @@ def main():
         if re.match(r"^(diff --git|\@@|^\+.*\s+$)", line):
             whitespace_selection.append(line)
 
-    whitespace_additions = [i for i in whitespace_selection if i.startswith("+")]
+    whitespace_additions = [
+        i for i in whitespace_selection if i.startswith("+")
+    ]
 
     # Check if tab characters were found in the diff.
     for line in get_diff(commit_range, check_only_code=True).splitlines():
@@ -120,12 +139,16 @@ def main():
     ret = 0
 
     if len(whitespace_additions) > 0:
-        print("This diff appears to have added new lines with trailing whitespace.")
+        print(
+            "This diff appears to have added new lines with trailing whitespace."
+        )
         report_diff(whitespace_selection)
         ret = 1
 
     if len(tab_additions) > 0:
-        print("This diff appears to have added new lines with tab characters instead of spaces.")
+        print(
+            "This diff appears to have added new lines with tab characters instead of spaces."
+        )
         report_diff(tab_selection)
         ret = 1
 

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022 The Bitcoin Core developers
+# Copyright (c) 2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test removing undeleted pruned blk files on startup."""
 
 import os
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 
-class FeatureRemovePrunedFilesOnStartupTest(BitcoinTestFramework):
+
+class FeatureRemovePrunedFilesOnStartupTest(SugarchainTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.extra_args = [["-fastprune", "-prune=1"]]
@@ -20,10 +21,18 @@ class FeatureRemovePrunedFilesOnStartupTest(BitcoinTestFramework):
         self.sync_blocks()
 
     def run_test(self):
-        blk0 = os.path.join(self.nodes[0].datadir, self.nodes[0].chain, 'blocks', 'blk00000.dat')
-        rev0 = os.path.join(self.nodes[0].datadir, self.nodes[0].chain, 'blocks', 'rev00000.dat')
-        blk1 = os.path.join(self.nodes[0].datadir, self.nodes[0].chain, 'blocks', 'blk00001.dat')
-        rev1 = os.path.join(self.nodes[0].datadir, self.nodes[0].chain, 'blocks', 'rev00001.dat')
+        blk0 = os.path.join(
+            self.nodes[0].datadir, self.nodes[0].chain, "blocks", "blk00000.dat"
+        )
+        rev0 = os.path.join(
+            self.nodes[0].datadir, self.nodes[0].chain, "blocks", "rev00000.dat"
+        )
+        blk1 = os.path.join(
+            self.nodes[0].datadir, self.nodes[0].chain, "blocks", "blk00001.dat"
+        )
+        rev1 = os.path.join(
+            self.nodes[0].datadir, self.nodes[0].chain, "blocks", "rev00001.dat"
+        )
         self.mine_batches(800)
         fo1 = os.open(blk0, os.O_RDONLY)
         fo2 = os.open(rev1, os.O_RDONLY)
@@ -32,7 +41,7 @@ class FeatureRemovePrunedFilesOnStartupTest(BitcoinTestFramework):
         self.nodes[0].pruneblockchain(600)
 
         # Windows systems will not remove files with an open fd
-        if os.name != 'nt':
+        if os.name != "nt":
             assert not os.path.exists(blk0)
             assert not os.path.exists(rev0)
             assert not os.path.exists(blk1)
@@ -50,5 +59,6 @@ class FeatureRemovePrunedFilesOnStartupTest(BitcoinTestFramework):
         assert not os.path.exists(blk0)
         assert not os.path.exists(rev1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     FeatureRemovePrunedFilesOnStartupTest().main()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2022 The Bitcoin Core developers
+# Copyright (c) 2015-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test the ZMQ notification interface."""
@@ -15,7 +15,7 @@ from test_framework.blocktools import (
     create_block,
     create_coinbase,
 )
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.messages import (
     hash256,
     tx_from_hex,
@@ -37,8 +37,10 @@ try:
 except ImportError:
     pass
 
+
 def hash256_reversed(byte_str):
     return hash256(byte_str)[::-1]
+
 
 class ZMQSubscriber:
     def __init__(self, socket, topic):
@@ -54,7 +56,7 @@ class ZMQSubscriber:
         # Topic should match the subscriber topic.
         assert_equal(topic, self.topic)
         # Sequence should be incremental.
-        received_seq = struct.unpack('<I', seq)[-1]
+        received_seq = struct.unpack("<I", seq)[-1]
         if self.sequence is None:
             self.sequence = received_seq
         else:
@@ -69,7 +71,11 @@ class ZMQSubscriber:
         body = self._receive_from_publisher_and_check()
         hash = body[:32].hex()
         label = chr(body[32])
-        mempool_sequence = None if len(body) != 32+1+8 else struct.unpack("<Q", body[32+1:])[0]
+        mempool_sequence = (
+            None
+            if len(body) != 32 + 1 + 8
+            else struct.unpack("<Q", body[32 + 1 :])[0]
+        )
         if mempool_sequence is not None:
             assert label == "A" or label == "R"
         else:
@@ -85,11 +91,14 @@ class ZMQTestSetupBlock:
     the generated block's hash, it's (coinbase) transaction id, the raw block or
     raw transaction data.
     """
+
     def __init__(self, test_framework, node):
-        self.block_hash = test_framework.generate(node, 1, sync_fun=test_framework.no_op)[0]
-        coinbase = node.getblock(self.block_hash, 2)['tx'][0]
-        self.tx_hash = coinbase['txid']
-        self.raw_tx = coinbase['hex']
+        self.block_hash = test_framework.generate(
+            node, 1, sync_fun=test_framework.no_op
+        )[0]
+        coinbase = node.getblock(self.block_hash, 2)["tx"][0]
+        self.tx_hash = coinbase["txid"]
+        self.raw_tx = coinbase["hex"]
         self.raw_block = node.getblock(self.block_hash, 0)
 
     def caused_notification(self, notification):
@@ -101,7 +110,7 @@ class ZMQTestSetupBlock:
         )
 
 
-class ZMQTest (BitcoinTestFramework):
+class ZMQTest(SugarchainTestFramework):
     def set_test_params(self):
         self.num_nodes = 2
         # This test isn't testing txn relay/timing, so set whitelist on the
@@ -111,7 +120,7 @@ class ZMQTest (BitcoinTestFramework):
 
     def skip_test_if_missing_module(self):
         self.skip_if_no_py3_zmq()
-        self.skip_if_no_bitcoind_zmq()
+        self.skip_if_no_sugarchaind_zmq()
 
     def run_test(self):
         self.wallet = MiniWallet(self.nodes[0])
@@ -130,7 +139,9 @@ class ZMQTest (BitcoinTestFramework):
 
     # Restart node with the specified zmq notifications enabled, subscribe to
     # all of them and return the corresponding ZMQSubscriber objects.
-    def setup_zmq_test(self, services, *, recv_timeout=60, sync_blocks=True, ipv6=False):
+    def setup_zmq_test(
+        self, services, *, recv_timeout=60, sync_blocks=True, ipv6=False
+    ):
         subscribers = []
         for topic, address in services:
             socket = self.ctx.socket(zmq.SUB)
@@ -138,8 +149,11 @@ class ZMQTest (BitcoinTestFramework):
                 socket.setsockopt(zmq.IPV6, 1)
             subscribers.append(ZMQSubscriber(socket, topic.encode()))
 
-        self.restart_node(0, [f"-zmqpub{topic}={address}" for topic, address in services] +
-                             self.extra_args[0])
+        self.restart_node(
+            0,
+            [f"-zmqpub{topic}={address}" for topic, address in services]
+            + self.extra_args[0],
+        )
 
         for i, sub in enumerate(subscribers):
             sub.socket.connect(services[i][1])
@@ -157,18 +171,26 @@ class ZMQTest (BitcoinTestFramework):
             recv_failed = False
             for sub in subscribers:
                 try:
-                    while not test_block.caused_notification(sub.receive().hex()):
-                        self.log.debug("Ignoring sync-up notification for previously generated block.")
+                    while not test_block.caused_notification(
+                        sub.receive().hex()
+                    ):
+                        self.log.debug(
+                            "Ignoring sync-up notification for previously generated block."
+                        )
                 except zmq.error.Again:
-                    self.log.debug("Didn't receive sync-up notification, trying again.")
+                    self.log.debug(
+                        "Didn't receive sync-up notification, trying again."
+                    )
                     recv_failed = True
             if not recv_failed:
-                self.log.debug("ZMQ sync-up completed, all subscribers are ready.")
+                self.log.debug(
+                    "ZMQ sync-up completed, all subscribers are ready."
+                )
                 break
 
         # set subscriber's desired timeout for the test
         for sub in subscribers:
-            sub.socket.set(zmq.RCVTIMEO, recv_timeout*1000)
+            sub.socket.set(zmq.RCVTIMEO, recv_timeout * 1000)
 
         self.connect_nodes(0, 1)
         if sync_blocks:
@@ -177,12 +199,16 @@ class ZMQTest (BitcoinTestFramework):
         return subscribers
 
     def test_basic(self):
-
         # Invalid zmq arguments don't take down the node, see #17185.
         self.restart_node(0, ["-zmqpubrawtx=foo", "-zmqpubhashtx=bar"])
 
         address = f"tcp://127.0.0.1:{self.zmq_port_base}"
-        subs = self.setup_zmq_test([(topic, address) for topic in ["hashblock", "hashtx", "rawblock", "rawtx"]])
+        subs = self.setup_zmq_test(
+            [
+                (topic, address)
+                for topic in ["hashblock", "hashtx", "rawblock", "rawtx"]
+            ]
+        )
 
         hashblock = subs[0]
         hashtx = subs[1]
@@ -190,8 +216,12 @@ class ZMQTest (BitcoinTestFramework):
         rawtx = subs[3]
 
         num_blocks = 5
-        self.log.info(f"Generate {num_blocks} blocks (and {num_blocks} coinbase txes)")
-        genhashes = self.generatetoaddress(self.nodes[0], num_blocks, ADDRESS_BCRT1_UNSPENDABLE)
+        self.log.info(
+            f"Generate {num_blocks} blocks (and {num_blocks} coinbase txes)"
+        )
+        genhashes = self.generatetoaddress(
+            self.nodes[0], num_blocks, ADDRESS_BCRT1_UNSPENDABLE
+        )
 
         for x in range(num_blocks):
             # Should receive the coinbase txid.
@@ -212,10 +242,9 @@ class ZMQTest (BitcoinTestFramework):
             # The block should only have the coinbase txid.
             assert_equal([txid.hex()], self.nodes[1].getblock(hash)["tx"])
 
-
         self.log.info("Wait for tx from second node")
         payment_tx = self.wallet.send_self_transfer(from_node=self.nodes[1])
-        payment_txid = payment_tx['txid']
+        payment_txid = payment_tx["txid"]
         self.sync_all()
         # Should receive the broadcasted txid.
         txid = hashtx.receive()
@@ -223,7 +252,7 @@ class ZMQTest (BitcoinTestFramework):
 
         # Should receive the broadcasted raw transaction.
         hex = rawtx.receive()
-        assert_equal(payment_tx['wtxid'], hash256_reversed(hex).hex())
+        assert_equal(payment_tx["wtxid"], hash256_reversed(hex).hex())
 
         # Mining the block with this tx should result in second notification
         # after coinbase tx notification
@@ -232,44 +261,56 @@ class ZMQTest (BitcoinTestFramework):
         txid = hashtx.receive()
         assert_equal(payment_txid, txid.hex())
 
-
         self.log.info("Test the getzmqnotifications RPC")
-        assert_equal(self.nodes[0].getzmqnotifications(), [
-            {"type": "pubhashblock", "address": address, "hwm": 1000},
-            {"type": "pubhashtx", "address": address, "hwm": 1000},
-            {"type": "pubrawblock", "address": address, "hwm": 1000},
-            {"type": "pubrawtx", "address": address, "hwm": 1000},
-        ])
+        assert_equal(
+            self.nodes[0].getzmqnotifications(),
+            [
+                {"type": "pubhashblock", "address": address, "hwm": 1000},
+                {"type": "pubhashtx", "address": address, "hwm": 1000},
+                {"type": "pubrawblock", "address": address, "hwm": 1000},
+                {"type": "pubrawtx", "address": address, "hwm": 1000},
+            ],
+        )
 
         assert_equal(self.nodes[1].getzmqnotifications(), [])
 
     def test_reorg(self):
-
         address = f"tcp://127.0.0.1:{self.zmq_port_base}"
 
         # Should only notify the tip if a reorg occurs
         hashblock, hashtx = self.setup_zmq_test(
             [(topic, address) for topic in ["hashblock", "hashtx"]],
-            recv_timeout=2)  # 2 second timeout to check end of notifications
+            recv_timeout=2,
+        )  # 2 second timeout to check end of notifications
         self.disconnect_nodes(0, 1)
 
         # Generate 1 block in nodes[0] with 1 mempool tx and receive all notifications
-        payment_txid = self.wallet.send_self_transfer(from_node=self.nodes[0])['txid']
-        disconnect_block = self.generatetoaddress(self.nodes[0], 1, ADDRESS_BCRT1_UNSPENDABLE, sync_fun=self.no_op)[0]
+        payment_txid = self.wallet.send_self_transfer(from_node=self.nodes[0])[
+            "txid"
+        ]
+        disconnect_block = self.generatetoaddress(
+            self.nodes[0], 1, ADDRESS_BCRT1_UNSPENDABLE, sync_fun=self.no_op
+        )[0]
         disconnect_cb = self.nodes[0].getblock(disconnect_block)["tx"][0]
-        assert_equal(self.nodes[0].getbestblockhash(), hashblock.receive().hex())
+        assert_equal(
+            self.nodes[0].getbestblockhash(), hashblock.receive().hex()
+        )
         assert_equal(hashtx.receive().hex(), payment_txid)
         assert_equal(hashtx.receive().hex(), disconnect_cb)
 
         # Generate 2 blocks in nodes[1] to a different address to ensure split
-        connect_blocks = self.generatetoaddress(self.nodes[1], 2, ADDRESS_BCRT1_P2WSH_OP_TRUE, sync_fun=self.no_op)
+        connect_blocks = self.generatetoaddress(
+            self.nodes[1], 2, ADDRESS_BCRT1_P2WSH_OP_TRUE, sync_fun=self.no_op
+        )
 
         # nodes[0] will reorg chain after connecting back nodes[1]
         self.connect_nodes(0, 1)
-        self.sync_blocks() # tx in mempool valid but not advertised
+        self.sync_blocks()  # tx in mempool valid but not advertised
 
         # Should receive nodes[1] tip
-        assert_equal(self.nodes[1].getbestblockhash(), hashblock.receive().hex())
+        assert_equal(
+            self.nodes[1].getbestblockhash(), hashblock.receive().hex()
+        )
 
         # During reorg:
         # Get old payment transaction notification from disconnect and disconnected cb
@@ -280,13 +321,22 @@ class ZMQTest (BitcoinTestFramework):
         assert_equal(hashtx.receive().hex(), payment_txid)
         # And the new connected coinbases
         for i in [0, 1]:
-            assert_equal(hashtx.receive().hex(), self.nodes[1].getblock(connect_blocks[i])["tx"][0])
+            assert_equal(
+                hashtx.receive().hex(),
+                self.nodes[1].getblock(connect_blocks[i])["tx"][0],
+            )
 
         # If we do a simple invalidate we announce the disconnected coinbase
         self.nodes[0].invalidateblock(connect_blocks[1])
-        assert_equal(hashtx.receive().hex(), self.nodes[1].getblock(connect_blocks[1])["tx"][0])
+        assert_equal(
+            hashtx.receive().hex(),
+            self.nodes[1].getblock(connect_blocks[1])["tx"][0],
+        )
         # And the current tip
-        assert_equal(hashtx.receive().hex(), self.nodes[1].getblock(connect_blocks[0])["tx"][0])
+        assert_equal(
+            hashtx.receive().hex(),
+            self.nodes[1].getblock(connect_blocks[0])["tx"][0],
+        )
 
     def test_sequence(self):
         """
@@ -299,20 +349,29 @@ class ZMQTest (BitcoinTestFramework):
         <32-byte hash>A<8-byte LE uint> : Transactionhash added mempool
         """
         self.log.info("Testing 'sequence' publisher")
-        [seq] = self.setup_zmq_test([("sequence", f"tcp://127.0.0.1:{self.zmq_port_base}")])
+        [seq] = self.setup_zmq_test(
+            [("sequence", f"tcp://127.0.0.1:{self.zmq_port_base}")]
+        )
         self.disconnect_nodes(0, 1)
 
         # Mempool sequence number starts at 1
         seq_num = 1
 
         # Generate 1 block in nodes[0] and receive all notifications
-        dc_block = self.generatetoaddress(self.nodes[0], 1, ADDRESS_BCRT1_UNSPENDABLE, sync_fun=self.no_op)[0]
+        dc_block = self.generatetoaddress(
+            self.nodes[0], 1, ADDRESS_BCRT1_UNSPENDABLE, sync_fun=self.no_op
+        )[0]
 
         # Note: We are not notified of any block transactions, coinbase or mined
-        assert_equal((self.nodes[0].getbestblockhash(), "C", None), seq.receive_sequence())
+        assert_equal(
+            (self.nodes[0].getbestblockhash(), "C", None),
+            seq.receive_sequence(),
+        )
 
         # Generate 2 blocks in nodes[1] to a different address to ensure a chain split
-        self.generatetoaddress(self.nodes[1], 2, ADDRESS_BCRT1_P2WSH_OP_TRUE, sync_fun=self.no_op)
+        self.generatetoaddress(
+            self.nodes[1], 2, ADDRESS_BCRT1_P2WSH_OP_TRUE, sync_fun=self.no_op
+        )
 
         # nodes[0] will reorg chain after connecting back nodes[1]
         self.connect_nodes(0, 1)
@@ -320,14 +379,22 @@ class ZMQTest (BitcoinTestFramework):
         # Then we receive all block (dis)connect notifications for the 2 block reorg
         assert_equal((dc_block, "D", None), seq.receive_sequence())
         block_count = self.nodes[1].getblockcount()
-        assert_equal((self.nodes[1].getblockhash(block_count-1), "C", None), seq.receive_sequence())
-        assert_equal((self.nodes[1].getblockhash(block_count), "C", None), seq.receive_sequence())
+        assert_equal(
+            (self.nodes[1].getblockhash(block_count - 1), "C", None),
+            seq.receive_sequence(),
+        )
+        assert_equal(
+            (self.nodes[1].getblockhash(block_count), "C", None),
+            seq.receive_sequence(),
+        )
 
         self.log.info("Wait for tx from second node")
         payment_tx = self.wallet.send_self_transfer(from_node=self.nodes[1])
-        payment_txid = payment_tx['txid']
+        payment_txid = payment_tx["txid"]
         self.sync_all()
-        self.log.info("Testing sequence notifications with mempool sequence values")
+        self.log.info(
+            "Testing sequence notifications with mempool sequence values"
+        )
 
         # Should receive the broadcasted txid.
         assert_equal((payment_txid, "A", seq_num), seq.receive_sequence())
@@ -335,8 +402,10 @@ class ZMQTest (BitcoinTestFramework):
 
         self.log.info("Testing RBF notification")
         # Replace it to test eviction/addition notification
-        payment_tx['tx'].vout[0].nValue -= 1000
-        rbf_txid = self.nodes[1].sendrawtransaction(payment_tx['tx'].serialize().hex())
+        payment_tx["tx"].vout[0].nValue -= 1000
+        rbf_txid = self.nodes[1].sendrawtransaction(
+            payment_tx["tx"].serialize().hex()
+        )
         self.sync_all()
         assert_equal((payment_txid, "R", seq_num), seq.receive_sequence())
         seq_num += 1
@@ -347,12 +416,18 @@ class ZMQTest (BitcoinTestFramework):
         # though the mempool sequence number does go up by the number of transactions
         # removed from the mempool by the block mining it.
         mempool_size = len(self.nodes[0].getrawmempool())
-        c_block = self.generatetoaddress(self.nodes[0], 1, ADDRESS_BCRT1_UNSPENDABLE)[0]
+        c_block = self.generatetoaddress(
+            self.nodes[0], 1, ADDRESS_BCRT1_UNSPENDABLE
+        )[0]
         # Make sure the number of mined transactions matches the number of txs out of mempool
         mempool_size_delta = mempool_size - len(self.nodes[0].getrawmempool())
-        assert_equal(len(self.nodes[0].getblock(c_block)["tx"])-1, mempool_size_delta)
+        assert_equal(
+            len(self.nodes[0].getblock(c_block)["tx"]) - 1, mempool_size_delta
+        )
         seq_num += mempool_size_delta
-        payment_txid_2 = self.wallet.send_self_transfer(from_node=self.nodes[1])['txid']
+        payment_txid_2 = self.wallet.send_self_transfer(
+            from_node=self.nodes[1]
+        )["txid"]
         self.sync_all()
         assert_equal((c_block, "C", None), seq.receive_sequence())
         assert_equal((payment_txid_2, "A", seq_num), seq.receive_sequence())
@@ -361,9 +436,22 @@ class ZMQTest (BitcoinTestFramework):
         # Spot check getrawmempool results that they only show up when asked for
         assert type(self.nodes[0].getrawmempool()) is list
         assert type(self.nodes[0].getrawmempool(mempool_sequence=False)) is list
-        assert "mempool_sequence" not in self.nodes[0].getrawmempool(verbose=True)
-        assert_raises_rpc_error(-8, "Verbose results cannot contain mempool sequence values.", self.nodes[0].getrawmempool, True, True)
-        assert_equal(self.nodes[0].getrawmempool(mempool_sequence=True)["mempool_sequence"], seq_num)
+        assert "mempool_sequence" not in self.nodes[0].getrawmempool(
+            verbose=True
+        )
+        assert_raises_rpc_error(
+            -8,
+            "Verbose results cannot contain mempool sequence values.",
+            self.nodes[0].getrawmempool,
+            True,
+            True,
+        )
+        assert_equal(
+            self.nodes[0].getrawmempool(mempool_sequence=True)[
+                "mempool_sequence"
+            ],
+            seq_num,
+        )
 
         self.log.info("Testing reorg notifications")
         # Manually invalidate the last block to test mempool re-entry
@@ -378,7 +466,12 @@ class ZMQTest (BitcoinTestFramework):
 
         # Make sure getrawmempool mempool_sequence results aren't "queued" but immediately reflective
         # of the time they were gathered.
-        assert self.nodes[0].getrawmempool(mempool_sequence=True)["mempool_sequence"] > seq_num
+        assert (
+            self.nodes[0].getrawmempool(mempool_sequence=True)[
+                "mempool_sequence"
+            ]
+            > seq_num
+        )
 
         assert_equal((best_hash, "D", None), seq.receive_sequence())
         assert_equal((rbf_txid, "A", seq_num), seq.receive_sequence())
@@ -390,24 +483,34 @@ class ZMQTest (BitcoinTestFramework):
 
         self.log.info("Evict mempool transaction by block conflict")
         orig_tx = self.wallet.send_self_transfer(from_node=self.nodes[0])
-        orig_txid = orig_tx['txid']
+        orig_txid = orig_tx["txid"]
 
         # More to be simply mined
         more_tx = []
         for _ in range(5):
-            more_tx.append(self.wallet.send_self_transfer(from_node=self.nodes[0]))
+            more_tx.append(
+                self.wallet.send_self_transfer(from_node=self.nodes[0])
+            )
 
-        orig_tx['tx'].vout[0].nValue -= 1000
-        bump_txid = self.nodes[0].sendrawtransaction(orig_tx['tx'].serialize().hex())
+        orig_tx["tx"].vout[0].nValue -= 1000
+        bump_txid = self.nodes[0].sendrawtransaction(
+            orig_tx["tx"].serialize().hex()
+        )
         # Mine the pre-bump tx
-        txs_to_add = [orig_tx['hex']] + [tx['hex'] for tx in more_tx]
-        block = create_block(int(self.nodes[0].getbestblockhash(), 16), create_coinbase(self.nodes[0].getblockcount()+1), txlist=txs_to_add)
+        txs_to_add = [orig_tx["hex"]] + [tx["hex"] for tx in more_tx]
+        block = create_block(
+            int(self.nodes[0].getbestblockhash(), 16),
+            create_coinbase(self.nodes[0].getblockcount() + 1),
+            txlist=txs_to_add,
+        )
         add_witness_commitment(block)
         block.solve()
         assert_equal(self.nodes[0].submitblock(block.serialize().hex()), None)
         tip = self.nodes[0].getbestblockhash()
         assert_equal(int(tip, 16), block.sha256)
-        orig_txid_2 = self.wallet.send_self_transfer(from_node=self.nodes[0])['txid']
+        orig_txid_2 = self.wallet.send_self_transfer(from_node=self.nodes[0])[
+            "txid"
+        ]
 
         # Flush old notifications until evicted tx original entry
         (hash_str, label, mempool_seq) = seq.receive_sequence()
@@ -419,7 +522,9 @@ class ZMQTest (BitcoinTestFramework):
         assert_equal(label, "A")
         # More transactions to be simply mined
         for i in range(len(more_tx)):
-            assert_equal((more_tx[i]['txid'], "A", mempool_seq), seq.receive_sequence())
+            assert_equal(
+                (more_tx[i]["txid"], "A", mempool_seq), seq.receive_sequence()
+            )
             mempool_seq += 1
         # Bumped by rbf
         assert_equal((orig_txid, "R", mempool_seq), seq.receive_sequence())
@@ -443,10 +548,14 @@ class ZMQTest (BitcoinTestFramework):
         """
 
         self.log.info("Testing 'mempool sync' usage of sequence notifier")
-        [seq] = self.setup_zmq_test([("sequence", f"tcp://127.0.0.1:{self.zmq_port_base}")])
+        [seq] = self.setup_zmq_test(
+            [("sequence", f"tcp://127.0.0.1:{self.zmq_port_base}")]
+        )
 
         # In-memory counter, should always start at 1
-        next_mempool_seq = self.nodes[0].getrawmempool(mempool_sequence=True)["mempool_sequence"]
+        next_mempool_seq = self.nodes[0].getrawmempool(mempool_sequence=True)[
+            "mempool_sequence"
+        ]
         assert_equal(next_mempool_seq, 1)
 
         # Some transactions have been happening but we aren't consuming zmq notifications yet
@@ -473,7 +582,9 @@ class ZMQTest (BitcoinTestFramework):
         # Snapshot may be too old compared to zmq message we read off latest
         while zmq_mem_seq >= get_raw_seq:
             sleep(2)
-            mempool_snapshot = self.nodes[0].getrawmempool(mempool_sequence=True)
+            mempool_snapshot = self.nodes[0].getrawmempool(
+                mempool_sequence=True
+            )
             mempool_view = set(mempool_snapshot["txids"])
             get_raw_seq = mempool_snapshot["mempool_sequence"]
 
@@ -481,11 +592,13 @@ class ZMQTest (BitcoinTestFramework):
         # We have node 0 do all these to avoid p2p races with RBF announcements
         for _ in range(num_txs):
             txs.append(self.wallet.send_self_transfer(from_node=self.nodes[0]))
-        txs[-1]['tx'].vout[0].nValue -= 1000
-        self.nodes[0].sendrawtransaction(txs[-1]['tx'].serialize().hex())
+        txs[-1]["tx"].vout[0].nValue -= 1000
+        self.nodes[0].sendrawtransaction(txs[-1]["tx"].serialize().hex())
         self.sync_all()
         self.generatetoaddress(self.nodes[0], 1, ADDRESS_BCRT1_UNSPENDABLE)
-        final_txid = self.wallet.send_self_transfer(from_node=self.nodes[0])['txid']
+        final_txid = self.wallet.send_self_transfer(from_node=self.nodes[0])[
+            "txid"
+        ]
 
         # 3) Consume ZMQ backlog until we get to "now" for the mempool snapshot
         while True:
@@ -495,7 +608,9 @@ class ZMQTest (BitcoinTestFramework):
             if mempool_sequence is not None:
                 zmq_mem_seq = mempool_sequence
                 if zmq_mem_seq > get_raw_seq:
-                    raise Exception(f"We somehow jumped mempool sequence numbers! zmq_mem_seq: {zmq_mem_seq} > get_raw_seq: {get_raw_seq}")
+                    raise Exception(
+                        f"We somehow jumped mempool sequence numbers! zmq_mem_seq: {zmq_mem_seq} > get_raw_seq: {get_raw_seq}"
+                    )
 
         # 4) Moving forward, we apply the delta to our local view
         #    remaining txs(5) + 1 rbf(A+R) + 1 block connect + 1 final tx
@@ -511,7 +626,9 @@ class ZMQTest (BitcoinTestFramework):
                         assert mempool_sequence > expected_sequence
                         r_gap += mempool_sequence - expected_sequence
                     else:
-                        raise Exception(f"WARNING: txhash has unexpected mempool sequence value: {mempool_sequence} vs expected {expected_sequence}")
+                        raise Exception(
+                            f"WARNING: txhash has unexpected mempool sequence value: {mempool_sequence} vs expected {expected_sequence}"
+                        )
             if label == "A":
                 assert hash_str not in mempool_view
                 mempool_view.add(hash_str)
@@ -536,7 +653,12 @@ class ZMQTest (BitcoinTestFramework):
                 raise Exception("Unexpected ZMQ sequence label!")
 
         assert_equal(self.nodes[0].getrawmempool(), [final_txid])
-        assert_equal(self.nodes[0].getrawmempool(mempool_sequence=True)["mempool_sequence"], expected_sequence)
+        assert_equal(
+            self.nodes[0].getrawmempool(mempool_sequence=True)[
+                "mempool_sequence"
+            ],
+            expected_sequence,
+        )
 
         # 5) If you miss a zmq/mempool sequence number, go back to step (2)
 
@@ -547,17 +669,26 @@ class ZMQTest (BitcoinTestFramework):
         # (note that after the reorg test, syncing would fail due to different
         # chain lengths on node0 and node1; for this test we only need node0, so
         # we can disable syncing blocks on the setup)
-        subscribers = self.setup_zmq_test([
-            ("hashblock", f"tcp://127.0.0.1:{self.zmq_port_base + 1}"),
-            ("hashblock", f"tcp://127.0.0.1:{self.zmq_port_base + 2}"),
-        ], sync_blocks=False)
+        subscribers = self.setup_zmq_test(
+            [
+                ("hashblock", f"tcp://127.0.0.1:{self.zmq_port_base + 1}"),
+                ("hashblock", f"tcp://127.0.0.1:{self.zmq_port_base + 2}"),
+            ],
+            sync_blocks=False,
+        )
 
         # Generate 1 block in nodes[0] and receive all notifications
-        self.generatetoaddress(self.nodes[0], 1, ADDRESS_BCRT1_UNSPENDABLE, sync_fun=self.no_op)
+        self.generatetoaddress(
+            self.nodes[0], 1, ADDRESS_BCRT1_UNSPENDABLE, sync_fun=self.no_op
+        )
 
         # Should receive the same block hash on both subscribers
-        assert_equal(self.nodes[0].getbestblockhash(), subscribers[0].receive().hex())
-        assert_equal(self.nodes[0].getbestblockhash(), subscribers[1].receive().hex())
+        assert_equal(
+            self.nodes[0].getbestblockhash(), subscribers[0].receive().hex()
+        )
+        assert_equal(
+            self.nodes[0].getbestblockhash(), subscribers[1].receive().hex()
+        )
 
     def test_ipv6(self):
         if not test_ipv6_local():
@@ -565,16 +696,18 @@ class ZMQTest (BitcoinTestFramework):
             return
         self.log.info("Testing IPv6")
         # Set up subscriber using IPv6 loopback address
-        subscribers = self.setup_zmq_test([
-            ("hashblock", f"tcp://[::1]:{self.zmq_port_base}")
-        ], ipv6=True)
+        subscribers = self.setup_zmq_test(
+            [("hashblock", f"tcp://[::1]:{self.zmq_port_base}")], ipv6=True
+        )
 
         # Generate 1 block in nodes[0]
         self.generatetoaddress(self.nodes[0], 1, ADDRESS_BCRT1_UNSPENDABLE)
 
         # Should receive the same block hash
-        assert_equal(self.nodes[0].getbestblockhash(), subscribers[0].receive().hex())
+        assert_equal(
+            self.nodes[0].getbestblockhash(), subscribers[0].receive().hex()
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     ZMQTest().main()

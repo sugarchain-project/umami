@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2017-2021 The Bitcoin Core developers
+# Copyright (c) 2017-2021 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test loadblock option
@@ -17,11 +17,11 @@ import tempfile
 import urllib
 
 from test_framework.blocktools import COINBASE_MATURITY
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import assert_equal
 
 
-class LoadblockTest(BitcoinTestFramework):
+class LoadblockTest(SugarchainTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2
@@ -38,10 +38,9 @@ class LoadblockTest(BitcoinTestFramework):
         bootstrap_file = os.path.join(self.options.tmpdir, "bootstrap.dat")
         genesis_block = self.nodes[0].getblockhash(0)
         blocks_dir = os.path.join(data_dir, self.chain, "blocks")
-        hash_list = tempfile.NamedTemporaryFile(dir=data_dir,
-                                                mode='w',
-                                                delete=False,
-                                                encoding="utf-8")
+        hash_list = tempfile.NamedTemporaryFile(
+            dir=data_dir, mode="w", delete=False, encoding="utf-8"
+        )
 
         self.log.info("Create linearization config file")
         with open(cfg_file, "a", encoding="utf-8") as cfg:
@@ -61,23 +60,32 @@ class LoadblockTest(BitcoinTestFramework):
         linearize_dir = os.path.join(base_dir, "contrib", "linearize")
 
         self.log.info("Run linearization of block hashes")
-        linearize_hashes_file = os.path.join(linearize_dir, "linearize-hashes.py")
-        subprocess.run([sys.executable, linearize_hashes_file, cfg_file],
-                       stdout=hash_list,
-                       check=True)
+        linearize_hashes_file = os.path.join(
+            linearize_dir, "linearize-hashes.py"
+        )
+        subprocess.run(
+            [sys.executable, linearize_hashes_file, cfg_file],
+            stdout=hash_list,
+            check=True,
+        )
 
         self.log.info("Run linearization of block data")
         linearize_data_file = os.path.join(linearize_dir, "linearize-data.py")
-        subprocess.run([sys.executable, linearize_data_file, cfg_file],
-                       check=True)
+        subprocess.run(
+            [sys.executable, linearize_data_file, cfg_file], check=True
+        )
 
         self.log.info("Restart second, unsynced node with bootstrap file")
         self.restart_node(1, extra_args=[f"-loadblock={bootstrap_file}"])
-        assert_equal(self.nodes[1].getblockcount(), 100)  # start_node is blocking on all block files being imported
+        assert_equal(
+            self.nodes[1].getblockcount(), 100
+        )  # start_node is blocking on all block files being imported
 
-        assert_equal(self.nodes[1].getblockchaininfo()['blocks'], 100)
-        assert_equal(self.nodes[0].getbestblockhash(), self.nodes[1].getbestblockhash())
+        assert_equal(self.nodes[1].getblockchaininfo()["blocks"], 100)
+        assert_equal(
+            self.nodes[0].getbestblockhash(), self.nodes[1].getbestblockhash()
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     LoadblockTest().main()

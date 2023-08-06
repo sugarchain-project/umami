@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022 The Bitcoin Core developers
+# Copyright (c) 2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 """  Tests the net:* tracepoint API interface.
-     See https://github.com/bitcoin/bitcoin/blob/master/doc/tracing.md#context-net
+     See https://github.com/sugarchain/sugarchain/blob/master/doc/tracing.md#context-net
 """
 
 import ctypes
 from io import BytesIO
+
 # Test will be skipped if we don't have bcc installed
 try:
-    from bcc import BPF, USDT # type: ignore[import]
+    from bcc import BPF, USDT  # type: ignore[import]
 except ImportError:
     pass
 from test_framework.messages import msg_version
 from test_framework.p2p import P2PInterface
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import assert_equal
 
 # Tor v3 addresses are 62 chars + 6 chars for the port (':12345').
@@ -27,7 +28,8 @@ MAX_MSG_TYPE_LENGTH = 20
 # larger messanges see contrib/tracing/log_raw_p2p_msgs.py
 MAX_MSG_DATA_LENGTH = 150
 
-net_tracepoints_program = """
+net_tracepoints_program = (
+    """
 #include <uapi/linux/ptrace.h>
 
 #define MAX_PEER_ADDR_LENGTH {}
@@ -35,11 +37,12 @@ net_tracepoints_program = """
 #define MAX_MSG_TYPE_LENGTH {}
 #define MAX_MSG_DATA_LENGTH {}
 """.format(
-    MAX_PEER_ADDR_LENGTH,
-    MAX_PEER_CONN_TYPE_LENGTH,
-    MAX_MSG_TYPE_LENGTH,
-    MAX_MSG_DATA_LENGTH
-) + """
+        MAX_PEER_ADDR_LENGTH,
+        MAX_PEER_CONN_TYPE_LENGTH,
+        MAX_MSG_TYPE_LENGTH,
+        MAX_MSG_DATA_LENGTH,
+    )
+    + """
 #define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 
 struct p2p_message
@@ -78,21 +81,22 @@ int trace_outbound_message(struct pt_regs *ctx) {
     return 0;
 };
 """
+)
 
 
-class NetTracepointTest(BitcoinTestFramework):
+class NetTracepointTest(SugarchainTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
 
     def skip_test_if_missing_module(self):
         self.skip_if_platform_not_linux()
-        self.skip_if_no_bitcoind_tracepoints()
+        self.skip_if_no_sugarchaind_tracepoints()
         self.skip_if_no_python_bcc()
         self.skip_if_no_bpf_permissions()
 
     def run_test(self):
         # Tests the net:inbound_message and net:outbound_message tracepoints
-        # See https://github.com/bitcoin/bitcoin/blob/master/doc/tracing.md#context-net
+        # See https://github.com/sugarchain/sugarchain/blob/master/doc/tracing.md#context-net
 
         class P2PMessage(ctypes.Structure):
             _fields_ = [
@@ -108,12 +112,15 @@ class NetTracepointTest(BitcoinTestFramework):
                 return f"P2PMessage(peer={self.peer_id}, addr={self.peer_addr.decode('utf-8')}, conn_type={self.peer_conn_type.decode('utf-8')}, msg_type={self.msg_type.decode('utf-8')}, msg_size={self.msg_size})"
 
         self.log.info(
-            "hook into the net:inbound_message and net:outbound_message tracepoints")
+            "hook into the net:inbound_message and net:outbound_message tracepoints"
+        )
         ctx = USDT(pid=self.nodes[0].process.pid)
-        ctx.enable_probe(probe="net:inbound_message",
-                         fn_name="trace_inbound_message")
-        ctx.enable_probe(probe="net:outbound_message",
-                         fn_name="trace_outbound_message")
+        ctx.enable_probe(
+            probe="net:inbound_message", fn_name="trace_inbound_message"
+        )
+        ctx.enable_probe(
+            probe="net:outbound_message", fn_name="trace_outbound_message"
+        )
         bpf = BPF(text=net_tracepoints_program, usdt_contexts=[ctx], debug=0)
 
         # The handle_* function is a ctypes callback function called from C. When
@@ -128,14 +135,17 @@ class NetTracepointTest(BitcoinTestFramework):
             nonlocal checked_inbound_version_msg, checked_outbound_version_msg
             if event.msg_type.decode("utf-8") == "version":
                 self.log.info(
-                    f"check_p2p_message(): {'inbound' if inbound else 'outbound'} {event}")
+                    f"check_p2p_message(): {'inbound' if inbound else 'outbound'} {event}"
+                )
                 peer = self.nodes[0].getpeerinfo()[0]
                 msg = msg_version()
-                msg.deserialize(BytesIO(bytes(event.msg[:event.msg_size])))
+                msg.deserialize(BytesIO(bytes(event.msg[: event.msg_size])))
                 assert_equal(peer["id"], event.peer_id, peer["id"])
                 assert_equal(peer["addr"], event.peer_addr.decode("utf-8"))
-                assert_equal(peer["connection_type"],
-                             event.peer_conn_type.decode("utf-8"))
+                assert_equal(
+                    peer["connection_type"],
+                    event.peer_conn_type.decode("utf-8"),
+                )
                 if inbound:
                     checked_inbound_version_msg += 1
                 else:
@@ -152,20 +162,23 @@ class NetTracepointTest(BitcoinTestFramework):
         bpf["inbound_messages"].open_perf_buffer(handle_inbound)
         bpf["outbound_messages"].open_perf_buffer(handle_outbound)
 
-        self.log.info("connect a P2P test node to our bitcoind node")
+        self.log.info("connect a P2P test node to our sugarchaind node")
         test_node = P2PInterface()
         self.nodes[0].add_p2p_connection(test_node)
         bpf.perf_buffer_poll(timeout=200)
 
         self.log.info(
-            "check that we got both an inbound and outbound version message")
-        assert_equal(EXPECTED_INOUTBOUND_VERSION_MSG,
-                     checked_inbound_version_msg)
-        assert_equal(EXPECTED_INOUTBOUND_VERSION_MSG,
-                     checked_outbound_version_msg)
+            "check that we got both an inbound and outbound version message"
+        )
+        assert_equal(
+            EXPECTED_INOUTBOUND_VERSION_MSG, checked_inbound_version_msg
+        )
+        assert_equal(
+            EXPECTED_INOUTBOUND_VERSION_MSG, checked_outbound_version_msg
+        )
 
         bpf.cleanup()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     NetTracepointTest().main()

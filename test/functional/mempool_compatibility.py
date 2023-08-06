@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2017-2022 The Bitcoin Core developers
+# Copyright (c) 2017-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test that mempool.dat is both backward and forward compatible between versions
@@ -13,14 +13,14 @@ Previous releases are required by this test, see test/README.md.
 import os
 
 from test_framework.blocktools import COINBASE_MATURITY
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.wallet import (
     MiniWallet,
     MiniWalletMode,
 )
 
 
-class MempoolCompatibilityTest(BitcoinTestFramework):
+class MempoolCompatibilityTest(SugarchainTestFramework):
     def set_test_params(self):
         self.num_nodes = 2
 
@@ -28,10 +28,13 @@ class MempoolCompatibilityTest(BitcoinTestFramework):
         self.skip_if_no_previous_releases()
 
     def setup_network(self):
-        self.add_nodes(self.num_nodes, versions=[
-            200100,  # Last release with previous mempool format
-            None,
-        ])
+        self.add_nodes(
+            self.num_nodes,
+            versions=[
+                200100,  # Last release with previous mempool format
+                None,
+            ],
+        )
         self.start_nodes()
 
     def run_test(self):
@@ -55,25 +58,35 @@ class MempoolCompatibilityTest(BitcoinTestFramework):
         self.stop_node(0)
 
         self.log.info("Move mempool.dat from old to new node")
-        old_node_mempool = os.path.join(old_node.datadir, self.chain, 'mempool.dat')
-        new_node_mempool = os.path.join(new_node.datadir, self.chain, 'mempool.dat')
+        old_node_mempool = os.path.join(
+            old_node.datadir, self.chain, "mempool.dat"
+        )
+        new_node_mempool = os.path.join(
+            new_node.datadir, self.chain, "mempool.dat"
+        )
         os.rename(old_node_mempool, new_node_mempool)
 
         self.log.info("Start new node and verify mempool contains the tx")
         self.start_node(1)
         assert old_tx_hash in new_node.getrawmempool()
 
-        self.log.info("Add unbroadcasted tx to mempool on new node and shutdown")
-        unbroadcasted_tx_hash = new_wallet.send_self_transfer(from_node=new_node)['txid']
+        self.log.info(
+            "Add unbroadcasted tx to mempool on new node and shutdown"
+        )
+        unbroadcasted_tx_hash = new_wallet.send_self_transfer(
+            from_node=new_node
+        )["txid"]
         assert unbroadcasted_tx_hash in new_node.getrawmempool()
-        assert new_node.getmempoolentry(unbroadcasted_tx_hash)['unbroadcast']
+        assert new_node.getmempoolentry(unbroadcasted_tx_hash)["unbroadcast"]
         self.stop_node(1)
 
         self.log.info("Move mempool.dat from new to old node")
         os.rename(new_node_mempool, old_node_mempool)
 
-        self.log.info("Start old node again and verify mempool contains both txs")
-        self.start_node(0, ['-nowallet'])
+        self.log.info(
+            "Start old node again and verify mempool contains both txs"
+        )
+        self.start_node(0, ["-nowallet"])
         assert old_tx_hash in old_node.getrawmempool()
         assert unbroadcasted_tx_hash in old_node.getrawmempool()
 

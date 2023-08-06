@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# Copyright (c) 2023 The Bitcoin Core developers
+# Copyright (c) 2023 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test validateaddress for main chain"""
 
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 
 from test_framework.util import assert_equal
 
@@ -15,7 +15,11 @@ INVALID_DATA = [
         "Invalid or unsupported Segwit (Bech32) or Base58 encoding.",  # Invalid hrp
         [],
     ),
-    ("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t5", "Invalid Bech32 checksum", [41]),
+    (
+        "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t5",
+        "Invalid Bech32 checksum",
+        [41],
+    ),
     (
         "BC13W508D6QEJXTDG4Y5R3ZARVARY0C5XW7KN40WF2",
         "Version 1+ witness address must use Bech32m checksum",
@@ -145,7 +149,10 @@ VALID_DATA = [
         "5128751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6",
     ),
     ("BC1SW50QGDZ25J", "6002751e"),
-    ("bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs", "5210751e76e8199196d454941c45d1b3a323"),
+    (
+        "bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs",
+        "5210751e76e8199196d454941c45d1b3a323",
+    ),
     # (
     #   "tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy",
     #   "0020000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433",
@@ -169,7 +176,7 @@ VALID_DATA = [
 ]
 
 
-class ValidateAddressMainTest(BitcoinTestFramework):
+class ValidateAddressMainTest(SugarchainTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.chain = ""  # main
@@ -190,9 +197,9 @@ class ValidateAddressMainTest(BitcoinTestFramework):
         assert_equal(res["error_locations"], error_locations)
 
     def test_validateaddress(self):
-        for (addr, error, locs) in INVALID_DATA:
+        for addr, error, locs in INVALID_DATA:
             self.check_invalid(addr, error, locs)
-        for (addr, spk) in VALID_DATA:
+        for addr, spk in VALID_DATA:
             self.check_valid(addr, spk)
 
     def run_test(self):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2014-2022 The Bitcoin Core developers
+# Copyright (c) 2014-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Helpful routines for regression testing."""
@@ -30,30 +30,42 @@ logger = logging.getLogger("TestFramework.utils")
 def assert_approx(v, vexp, vspan=0.00001):
     """Assert that `v` is within `vspan` of `vexp`"""
     if isinstance(v, Decimal) or isinstance(vexp, Decimal):
-        v=Decimal(v)
-        vexp=Decimal(vexp)
-        vspan=Decimal(vspan)
+        v = Decimal(v)
+        vexp = Decimal(vexp)
+        vspan = Decimal(vspan)
     if v < vexp - vspan:
-        raise AssertionError("%s < [%s..%s]" % (str(v), str(vexp - vspan), str(vexp + vspan)))
+        raise AssertionError(
+            "%s < [%s..%s]" % (str(v), str(vexp - vspan), str(vexp + vspan))
+        )
     if v > vexp + vspan:
-        raise AssertionError("%s > [%s..%s]" % (str(v), str(vexp - vspan), str(vexp + vspan)))
+        raise AssertionError(
+            "%s > [%s..%s]" % (str(v), str(vexp - vspan), str(vexp + vspan))
+        )
 
 
-def assert_fee_amount(fee, tx_size, feerate_BTC_kvB):
+def assert_fee_amount(fee, tx_size, feerate_SUGAR_kvB):
     """Assert the fee is in range."""
     assert isinstance(tx_size, int)
-    target_fee = get_fee(tx_size, feerate_BTC_kvB)
+    target_fee = get_fee(tx_size, feerate_SUGAR_kvB)
     if fee < target_fee:
-        raise AssertionError("Fee of %s BTC too low! (Should be %s BTC)" % (str(fee), str(target_fee)))
+        raise AssertionError(
+            "Fee of %s SUGAR too low! (Should be %s SUGAR)"
+            % (str(fee), str(target_fee))
+        )
     # allow the wallet's estimation to be at most 2 bytes off
-    high_fee = get_fee(tx_size + 2, feerate_BTC_kvB)
+    high_fee = get_fee(tx_size + 2, feerate_SUGAR_kvB)
     if fee > high_fee:
-        raise AssertionError("Fee of %s BTC too high! (Should be %s BTC)" % (str(fee), str(target_fee)))
+        raise AssertionError(
+            "Fee of %s SUGAR too high! (Should be %s SUGAR)"
+            % (str(fee), str(target_fee))
+        )
 
 
 def assert_equal(thing1, thing2, *args):
     if thing1 != thing2 or any(thing1 != arg for arg in args):
-        raise AssertionError("not(%s)" % " == ".join(str(arg) for arg in (thing1, thing2) + args))
+        raise AssertionError(
+            "not(%s)" % " == ".join(str(arg) for arg in (thing1, thing2) + args)
+        )
 
 
 def assert_greater_than(thing1, thing2):
@@ -74,19 +86,25 @@ def assert_raises_message(exc, message, fun, *args, **kwds):
     try:
         fun(*args, **kwds)
     except JSONRPCException:
-        raise AssertionError("Use assert_raises_rpc_error() to test RPC failures")
+        raise AssertionError(
+            "Use assert_raises_rpc_error() to test RPC failures"
+        )
     except exc as e:
-        if message is not None and message not in e.error['message']:
+        if message is not None and message not in e.error["message"]:
             raise AssertionError(
                 "Expected substring not found in error message:\nsubstring: '{}'\nerror message: '{}'.".format(
-                    message, e.error['message']))
+                    message, e.error["message"]
+                )
+            )
     except Exception as e:
         raise AssertionError("Unexpected exception raised: " + type(e).__name__)
     else:
         raise AssertionError("No exception raised")
 
 
-def assert_raises_process_error(returncode: int, output: str, fun: Callable, *args, **kwds):
+def assert_raises_process_error(
+    returncode: int, output: str, fun: Callable, *args, **kwds
+):
     """Execute a process and asserts the process return code and output.
 
     Calls function `fun` with arguments `args` and `kwds`. Catches a CalledProcessError
@@ -111,7 +129,9 @@ def assert_raises_process_error(returncode: int, output: str, fun: Callable, *ar
         raise AssertionError("No exception raised")
 
 
-def assert_raises_rpc_error(code: Optional[int], message: Optional[str], fun: Callable, *args, **kwds):
+def assert_raises_rpc_error(
+    code: Optional[int], message: Optional[str], fun: Callable, *args, **kwds
+):
     """Run an RPC and verify that a specific JSONRPC exception code and message is raised.
 
     Calls function `fun` with arguments `args` and `kwds`. Catches a JSONRPCException
@@ -140,11 +160,15 @@ def try_rpc(code, message, fun, *args, **kwds):
     except JSONRPCException as e:
         # JSONRPCException was thrown as expected. Check the code and message values are correct.
         if (code is not None) and (code != e.error["code"]):
-            raise AssertionError("Unexpected JSONRPC error code %i" % e.error["code"])
-        if (message is not None) and (message not in e.error['message']):
+            raise AssertionError(
+                "Unexpected JSONRPC error code %i" % e.error["code"]
+            )
+        if (message is not None) and (message not in e.error["message"]):
             raise AssertionError(
                 "Expected substring not found in error message:\nsubstring: '{}'\nerror message: '{}'.".format(
-                    message, e.error['message']))
+                    message, e.error["message"]
+                )
+            )
         return True
     except Exception as e:
         raise AssertionError("Unexpected exception raised: " + type(e).__name__)
@@ -156,26 +180,34 @@ def assert_is_hex_string(string):
     try:
         int(string, 16)
     except Exception as e:
-        raise AssertionError("Couldn't interpret %r as hexadecimal; raised: %s" % (string, e))
+        raise AssertionError(
+            "Couldn't interpret %r as hexadecimal; raised: %s" % (string, e)
+        )
 
 
 def assert_is_hash_string(string, length=64):
     if not isinstance(string, str):
         raise AssertionError("Expected a string, got type %r" % type(string))
     elif length and len(string) != length:
-        raise AssertionError("String of length %d expected; got %d" % (length, len(string)))
-    elif not re.match('[abcdef0-9]+$', string):
-        raise AssertionError("String %r contains invalid characters for a hash." % string)
+        raise AssertionError(
+            "String of length %d expected; got %d" % (length, len(string))
+        )
+    elif not re.match("[abcdef0-9]+$", string):
+        raise AssertionError(
+            "String %r contains invalid characters for a hash." % string
+        )
 
 
-def assert_array_result(object_array, to_match, expected, should_not_find=False):
+def assert_array_result(
+    object_array, to_match, expected, should_not_find=False
+):
     """
-        Pass in array of JSON objects, a dictionary with key/value pairs
-        to match against, and another dictionary with expected key/value
-        pairs.
-        If the should_not_find flag is true, to_match should not be found
-        in object_array
-        """
+    Pass in array of JSON objects, a dictionary with key/value pairs
+    to match against, and another dictionary with expected key/value
+    pairs.
+    If the should_not_find flag is true, to_match should not be found
+    in object_array
+    """
     if should_not_find:
         assert_equal(expected, {})
     num_matched = 0
@@ -190,7 +222,9 @@ def assert_array_result(object_array, to_match, expected, should_not_find=False)
             num_matched = num_matched + 1
         for key, value in expected.items():
             if item[key] != value:
-                raise AssertionError("%s : expected %s=%s" % (str(item), str(key), str(value)))
+                raise AssertionError(
+                    "%s : expected %s=%s" % (str(item), str(key), str(value))
+                )
             num_matched = num_matched + 1
     if num_matched == 0 and not should_not_find:
         raise AssertionError("No objects matched %s" % (str(to_match)))
@@ -203,7 +237,7 @@ def assert_array_result(object_array, to_match, expected, should_not_find=False)
 
 
 def check_json_precision():
-    """Make sure json library being used does not lose precision converting BTC values"""
+    """Make sure json library being used does not lose precision converting SUGAR values"""
     n = Decimal("20000000.00000003")
     satoshis = int(json.loads(json.dumps(float(n))) * 1.0e8)
     if satoshis != 2000000000000003:
@@ -221,7 +255,7 @@ def count_bytes(hex_string):
 
 
 def str_to_b64str(string):
-    return b64encode(string.encode('utf-8')).decode('ascii')
+    return b64encode(string.encode("utf-8")).decode("ascii")
 
 
 def ceildiv(a, b):
@@ -235,27 +269,38 @@ def ceildiv(a, b):
     return -(-a // b)
 
 
-def get_fee(tx_size, feerate_btc_kvb):
-    """Calculate the fee in BTC given a feerate is BTC/kvB. Reflects CFeeRate::GetFee"""
-    feerate_sat_kvb = int(feerate_btc_kvb * Decimal(1e8)) # Fee in sat/kvb as an int to avoid float precision errors
-    target_fee_sat = ceildiv(feerate_sat_kvb * tx_size, 1000) # Round calculated fee up to nearest sat
-    return target_fee_sat / Decimal(1e8) # Return result in  BTC
+def get_fee(tx_size, feerate_sugar_kvb):
+    """Calculate the fee in SUGAR given a feerate is SUGAR/kvB. Reflects CFeeRate::GetFee"""
+    feerate_sat_kvb = int(
+        feerate_sugar_kvb * Decimal(1e8)
+    )  # Fee in sat/kvb as an int to avoid float precision errors
+    target_fee_sat = ceildiv(
+        feerate_sat_kvb * tx_size, 1000
+    )  # Round calculated fee up to nearest sat
+    return target_fee_sat / Decimal(1e8)  # Return result in  SUGAR
 
 
 def satoshi_round(amount):
-    return Decimal(amount).quantize(Decimal('0.00000001'), rounding=ROUND_DOWN)
+    return Decimal(amount).quantize(Decimal("0.00000001"), rounding=ROUND_DOWN)
 
 
-def wait_until_helper(predicate, *, attempts=float('inf'), timeout=float('inf'), lock=None, timeout_factor=1.0):
+def wait_until_helper(
+    predicate,
+    *,
+    attempts=float("inf"),
+    timeout=float("inf"),
+    lock=None,
+    timeout_factor=1.0
+):
     """Sleep until the predicate resolves to be True.
 
     Warning: Note that this method is not recommended to be used in tests as it is
     not aware of the context of the test framework. Using the `wait_until()` members
-    from `BitcoinTestFramework` or `P2PInterface` class ensures the timeout is
+    from `SugarchainTestFramework` or `P2PInterface` class ensures the timeout is
     properly scaled. Furthermore, `wait_until()` from `P2PInterface` class in
     `p2p.py` has a preset lock.
     """
-    if attempts == float('inf') and timeout == float('inf'):
+    if attempts == float("inf") and timeout == float("inf"):
         timeout = 60
     timeout = timeout * timeout_factor
     attempt = 0
@@ -276,15 +321,23 @@ def wait_until_helper(predicate, *, attempts=float('inf'), timeout=float('inf'),
     predicate_source = "''''\n" + inspect.getsource(predicate) + "'''"
     logger.error("wait_until() failed. Predicate: {}".format(predicate_source))
     if attempt >= attempts:
-        raise AssertionError("Predicate {} not true after {} attempts".format(predicate_source, attempts))
+        raise AssertionError(
+            "Predicate {} not true after {} attempts".format(
+                predicate_source, attempts
+            )
+        )
     elif time.time() >= time_end:
-        raise AssertionError("Predicate {} not true after {} seconds".format(predicate_source, timeout))
-    raise RuntimeError('Unreachable')
+        raise AssertionError(
+            "Predicate {} not true after {} seconds".format(
+                predicate_source, timeout
+            )
+        )
+    raise RuntimeError("Unreachable")
 
 
 def sha256sum_file(filename):
     h = hashlib.sha256()
-    with open(filename, 'rb') as f:
+    with open(filename, "rb") as f:
         d = f.read(4096)
         while len(d) > 0:
             h.update(d)
@@ -304,7 +357,7 @@ def random_bytes(n):
 # The maximum number of nodes a single test can spawn
 MAX_NODES = 12
 # Don't assign rpc or p2p ports lower than this
-PORT_MIN = int(os.getenv('TEST_RUNNER_PORT_MIN', default=11000))
+PORT_MIN = int(os.getenv("TEST_RUNNER_PORT_MIN", default=11000))
 # The number of ports to "reserve" for p2p and rpc, each
 PORT_RANGE = 5000
 
@@ -314,7 +367,9 @@ class PortSeed:
     n = None
 
 
-def get_rpc_proxy(url: str, node_number: int, *, timeout: int=None, coveragedir: str=None) -> coverage.AuthServiceProxyWrapper:
+def get_rpc_proxy(
+    url: str, node_number: int, *, timeout: int = None, coveragedir: str = None
+) -> coverage.AuthServiceProxyWrapper:
     """
     Args:
         url: URL of the RPC server to call
@@ -330,30 +385,39 @@ def get_rpc_proxy(url: str, node_number: int, *, timeout: int=None, coveragedir:
     """
     proxy_kwargs = {}
     if timeout is not None:
-        proxy_kwargs['timeout'] = int(timeout)
+        proxy_kwargs["timeout"] = int(timeout)
 
     proxy = AuthServiceProxy(url, **proxy_kwargs)
 
-    coverage_logfile = coverage.get_filename(coveragedir, node_number) if coveragedir else None
+    coverage_logfile = (
+        coverage.get_filename(coveragedir, node_number) if coveragedir else None
+    )
 
     return coverage.AuthServiceProxyWrapper(proxy, url, coverage_logfile)
 
 
 def p2p_port(n):
     assert n <= MAX_NODES
-    return PORT_MIN + n + (MAX_NODES * PortSeed.n) % (PORT_RANGE - 1 - MAX_NODES)
+    return (
+        PORT_MIN + n + (MAX_NODES * PortSeed.n) % (PORT_RANGE - 1 - MAX_NODES)
+    )
 
 
 def rpc_port(n):
-    return PORT_MIN + PORT_RANGE + n + (MAX_NODES * PortSeed.n) % (PORT_RANGE - 1 - MAX_NODES)
+    return (
+        PORT_MIN
+        + PORT_RANGE
+        + n
+        + (MAX_NODES * PortSeed.n) % (PORT_RANGE - 1 - MAX_NODES)
+    )
 
 
 def rpc_url(datadir, i, chain, rpchost):
     rpc_u, rpc_p = get_auth_cookie(datadir, chain)
-    host = '127.0.0.1'
+    host = "127.0.0.1"
     port = rpc_port(i)
     if rpchost:
-        parts = rpchost.split(':')
+        parts = rpchost.split(":")
         if len(parts) == 2:
             host, port = parts
         else:
@@ -369,21 +433,28 @@ def initialize_datadir(dirname, n, chain, disable_autoconnect=True):
     datadir = get_datadir_path(dirname, n)
     if not os.path.isdir(datadir):
         os.makedirs(datadir)
-    write_config(os.path.join(datadir, "bitcoin.conf"), n=n, chain=chain, disable_autoconnect=disable_autoconnect)
-    os.makedirs(os.path.join(datadir, 'stderr'), exist_ok=True)
-    os.makedirs(os.path.join(datadir, 'stdout'), exist_ok=True)
+    write_config(
+        os.path.join(datadir, "sugarchain.conf"),
+        n=n,
+        chain=chain,
+        disable_autoconnect=disable_autoconnect,
+    )
+    os.makedirs(os.path.join(datadir, "stderr"), exist_ok=True)
+    os.makedirs(os.path.join(datadir, "stdout"), exist_ok=True)
     return datadir
 
 
-def write_config(config_path, *, n, chain, extra_config="", disable_autoconnect=True):
+def write_config(
+    config_path, *, n, chain, extra_config="", disable_autoconnect=True
+):
     # Translate chain subdirectory name to config name
-    if chain == 'testnet3':
-        chain_name_conf_arg = 'testnet'
-        chain_name_conf_section = 'test'
+    if chain == "testnet3":
+        chain_name_conf_arg = "testnet"
+        chain_name_conf_section = "test"
     else:
         chain_name_conf_arg = chain
         chain_name_conf_section = chain
-    with open(config_path, 'w', encoding='utf8') as f:
+    with open(config_path, "w", encoding="utf8") as f:
         if chain_name_conf_arg:
             f.write("{}=1\n".format(chain_name_conf_arg))
         if chain_name_conf_section:
@@ -421,7 +492,9 @@ def get_datadir_path(dirname, n):
 
 
 def append_config(datadir, options):
-    with open(os.path.join(datadir, "bitcoin.conf"), 'a', encoding='utf8') as f:
+    with open(
+        os.path.join(datadir, "sugarchain.conf"), "a", encoding="utf8"
+    ) as f:
         for option in options:
             f.write(option + "\n")
 
@@ -429,19 +502,27 @@ def append_config(datadir, options):
 def get_auth_cookie(datadir, chain):
     user = None
     password = None
-    if os.path.isfile(os.path.join(datadir, "bitcoin.conf")):
-        with open(os.path.join(datadir, "bitcoin.conf"), 'r', encoding='utf8') as f:
+    if os.path.isfile(os.path.join(datadir, "sugarchain.conf")):
+        with open(
+            os.path.join(datadir, "sugarchain.conf"), "r", encoding="utf8"
+        ) as f:
             for line in f:
                 if line.startswith("rpcuser="):
-                    assert user is None  # Ensure that there is only one rpcuser line
+                    assert (
+                        user is None
+                    )  # Ensure that there is only one rpcuser line
                     user = line.split("=")[1].strip("\n")
                 if line.startswith("rpcpassword="):
-                    assert password is None  # Ensure that there is only one rpcpassword line
+                    assert (
+                        password is None
+                    )  # Ensure that there is only one rpcpassword line
                     password = line.split("=")[1].strip("\n")
     try:
-        with open(os.path.join(datadir, chain, ".cookie"), 'r', encoding="ascii") as f:
+        with open(
+            os.path.join(datadir, chain, ".cookie"), "r", encoding="ascii"
+        ) as f:
             userpass = f.read()
-            split_userpass = userpass.split(':')
+            split_userpass = userpass.split(":")
             user = split_userpass[0]
             password = split_userpass[1]
     except OSError:
@@ -460,7 +541,7 @@ def delete_cookie_file(datadir, chain):
 
 def softfork_active(node, key):
     """Return whether a softfork is active."""
-    return node.getdeploymentinfo()['deployments'][key]['active']
+    return node.getdeploymentinfo()["deployments"][key]["active"]
 
 
 def set_node_times(nodes, t):
@@ -487,7 +568,9 @@ def find_output(node, txid, amount, *, blockhash=None):
     for i in range(len(txdata["vout"])):
         if txdata["vout"][i]["value"] == amount:
             return i
-    raise RuntimeError("find_output txid %s : %s not found" % (txid, str(amount)))
+    raise RuntimeError(
+        "find_output txid %s : %s not found" % (txid, str(amount))
+    )
 
 
 # Create large OP_RETURN txouts that can be appended to a transaction
@@ -496,14 +579,19 @@ def find_output(node, txid, amount, *, blockhash=None):
 def gen_return_txouts():
     from .messages import CTxOut
     from .script import CScript, OP_RETURN
-    txouts = [CTxOut(nValue=0, scriptPubKey=CScript([OP_RETURN, b'\x01'*67437]))]
+
+    txouts = [
+        CTxOut(nValue=0, scriptPubKey=CScript([OP_RETURN, b"\x01" * 67437]))
+    ]
     assert_equal(sum([len(txout.serialize()) for txout in txouts]), 67456)
     return txouts
 
 
 # Create a spend of each passed-in utxo, splicing in "txouts" to each raw
 # transaction to make it large.  See gen_return_txouts() above.
-def create_lots_of_big_transactions(mini_wallet, node, fee, tx_batch_size, txouts, utxos=None):
+def create_lots_of_big_transactions(
+    mini_wallet, node, fee, tx_batch_size, txouts, utxos=None
+):
     txids = []
     use_internal_utxos = utxos is None
     for _ in range(tx_batch_size):
@@ -513,7 +601,7 @@ def create_lots_of_big_transactions(mini_wallet, node, fee, tx_batch_size, txout
         )["tx"]
         tx.vout.extend(txouts)
         res = node.testmempoolaccept([tx.serialize().hex()])[0]
-        assert_equal(res['fees']['base'], fee)
+        assert_equal(res["fees"]["base"], fee)
         txids.append(node.sendrawtransaction(tx.serialize().hex()))
     return txids
 
@@ -536,7 +624,10 @@ def find_vout_for_address(node, txid, addr):
     for i in range(len(tx["vout"])):
         if addr == tx["vout"][i]["scriptPubKey"]["address"]:
             return i
-    raise RuntimeError("Vout not found for address: txid=%s, addr=%s" % (txid, addr))
+    raise RuntimeError(
+        "Vout not found for address: txid=%s, addr=%s" % (txid, addr)
+    )
+
 
 def modinv(a, n):
     """Compute the modular inverse of a modulo n using the extended Euclidean
@@ -555,6 +646,7 @@ def modinv(a, n):
         t1 += n
     return t1
 
+
 class TestFrameworkUtil(unittest.TestCase):
     def test_modinv(self):
         test_vectors = [
@@ -566,4 +658,4 @@ class TestFrameworkUtil(unittest.TestCase):
         ]
 
         for a, n in test_vectors:
-            self.assertEqual(modinv(a, n), pow(a, n-2, n))
+            self.assertEqual(modinv(a, n), pow(a, n - 2, n))

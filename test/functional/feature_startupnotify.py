@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020-2022 The Bitcoin Core developers
+# Copyright (c) 2020-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test -startupnotify."""
 
 import os
 
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import (
     assert_equal,
 )
@@ -15,7 +15,7 @@ NODE_DIR = "node0"
 FILE_NAME = "test.txt"
 
 
-class StartupNotifyTest(BitcoinTestFramework):
+class StartupNotifyTest(SugarchainTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.disable_syscall_sandbox = True
@@ -25,7 +25,12 @@ class StartupNotifyTest(BitcoinTestFramework):
         assert not os.path.exists(tmpdir_file)
 
         self.log.info("Test -startupnotify command is run when node starts")
-        self.restart_node(0, extra_args=[f"-startupnotify=echo '{FILE_NAME}' >> {NODE_DIR}/{FILE_NAME}"])
+        self.restart_node(
+            0,
+            extra_args=[
+                f"-startupnotify=echo '{FILE_NAME}' >> {NODE_DIR}/{FILE_NAME}"
+            ],
+        )
         self.wait_until(lambda: os.path.exists(tmpdir_file))
 
         self.log.info("Test -startupnotify is executed once")
@@ -42,5 +47,5 @@ class StartupNotifyTest(BitcoinTestFramework):
         assert_equal(self.nodes[0].getblockcount(), 200)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     StartupNotifyTest().main()

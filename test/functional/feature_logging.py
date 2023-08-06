@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-# Copyright (c) 2017-2021 The Bitcoin Core developers
+# Copyright (c) 2017-2021 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test debug logging."""
 
 import os
 
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.test_node import ErrorMatch
 
 
-class LoggingTest(BitcoinTestFramework):
+class LoggingTest(SugarchainTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.setup_clean_chain = True
@@ -37,7 +37,11 @@ class LoggingTest(BitcoinTestFramework):
         invalidname = os.path.join("foo", "foo.log")
         self.stop_node(0)
         exp_stderr = r"Error: Could not open debug log file \S+$"
-        self.nodes[0].assert_start_raises_init_error([f"-debuglogfile={invalidname}"], exp_stderr, match=ErrorMatch.FULL_REGEX)
+        self.nodes[0].assert_start_raises_init_error(
+            [f"-debuglogfile={invalidname}"],
+            exp_stderr,
+            match=ErrorMatch.FULL_REGEX,
+        )
         assert not os.path.isfile(os.path.join(invdir, "foo.log"))
 
         # check that invalid log (relative) works after path exists
@@ -50,7 +54,11 @@ class LoggingTest(BitcoinTestFramework):
         self.stop_node(0)
         invdir = os.path.join(self.options.tmpdir, "foo")
         invalidname = os.path.join(invdir, "foo.log")
-        self.nodes[0].assert_start_raises_init_error([f"-debuglogfile={invalidname}"], exp_stderr, match=ErrorMatch.FULL_REGEX)
+        self.nodes[0].assert_start_raises_init_error(
+            [f"-debuglogfile={invalidname}"],
+            exp_stderr,
+            match=ErrorMatch.FULL_REGEX,
+        )
         assert not os.path.isfile(os.path.join(invdir, "foo.log"))
 
         # check that invalid log (absolute) works after path exists
@@ -70,5 +78,5 @@ class LoggingTest(BitcoinTestFramework):
         self.restart_node(0, [f"-debuglogfile={os.devnull}"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     LoggingTest().main()

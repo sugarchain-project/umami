@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020-2022 The Bitcoin Core developers
+# Copyright (c) 2020-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Parse message capture binary files.  To be used in conjunction with -capturemessages."""
@@ -13,10 +13,12 @@ import json
 from pathlib import Path
 from typing import Any, List, Optional
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../test/functional'))
+sys.path.append(
+    os.path.join(os.path.dirname(__file__), "../../test/functional")
+)
 
-from test_framework.messages import ser_uint256     # noqa: E402
-from test_framework.p2p import MESSAGEMAP           # noqa: E402
+from test_framework.messages import ser_uint256  # noqa: E402
+from test_framework.p2p import MESSAGEMAP  # noqa: E402
 
 TIME_SIZE = 8
 LENGTH_SIZE = 4
@@ -59,11 +61,14 @@ class ProgressBar:
             return
         max_blocks = cols - 9
         num_blocks = int(max_blocks * progress)
-        print('\r[ {}{} ] {:3.0f}%'
-              .format('#' * num_blocks,
-                      ' ' * (max_blocks - num_blocks),
-                      progress * 100),
-              end ='')
+        print(
+            "\r[ {}{} ] {:3.0f}%".format(
+                "#" * num_blocks,
+                " " * (max_blocks - num_blocks),
+                progress * 100,
+            ),
+            end="",
+        )
 
     def update(self, more: float):
         self.running += more
@@ -74,12 +79,14 @@ def to_jsonable(obj: Any) -> Any:
     if hasattr(obj, "__dict__"):
         return obj.__dict__
     elif hasattr(obj, "__slots__"):
-        ret = {}    # type: Any
+        ret = {}  # type: Any
         for slot in obj.__slots__:
             val = getattr(obj, slot, None)
             if slot in HASH_INTS and isinstance(val, int):
                 ret[slot] = ser_uint256(val).hex()
-            elif slot in HASH_INT_VECTORS and all(isinstance(a, int) for a in val):
+            elif slot in HASH_INT_VECTORS and all(
+                isinstance(a, int) for a in val
+            ):
                 ret[slot] = [ser_uint256(a).hex() for a in val]
             else:
                 ret[slot] = to_jsonable(val)
@@ -92,8 +99,13 @@ def to_jsonable(obj: Any) -> Any:
         return obj
 
 
-def process_file(path: str, messages: List[Any], recv: bool, progress_bar: Optional[ProgressBar]) -> None:
-    with open(path, 'rb') as f_in:
+def process_file(
+    path: str,
+    messages: List[Any],
+    recv: bool,
+    progress_bar: Optional[ProgressBar],
+) -> None:
+    with open(path, "rb") as f_in:
         if progress_bar:
             bytes_read = 0
 
@@ -109,15 +121,23 @@ def process_file(path: str, messages: List[Any], recv: bool, progress_bar: Optio
             if not tmp_header_raw:
                 break
             tmp_header = BytesIO(tmp_header_raw)
-            time = int.from_bytes(tmp_header.read(TIME_SIZE), "little")      # type: int
-            msgtype = tmp_header.read(MSGTYPE_SIZE).split(b'\x00', 1)[0]     # type: bytes
-            length = int.from_bytes(tmp_header.read(LENGTH_SIZE), "little")  # type: int
+            time = int.from_bytes(
+                tmp_header.read(TIME_SIZE), "little"
+            )  # type: int
+            msgtype = tmp_header.read(MSGTYPE_SIZE).split(b"\x00", 1)[
+                0
+            ]  # type: bytes
+            length = int.from_bytes(
+                tmp_header.read(LENGTH_SIZE), "little"
+            )  # type: int
 
             # Start converting the message to a dictionary
             msg_dict = {}
             msg_dict["direction"] = "recv" if recv else "sent"
             msg_dict["time"] = time
-            msg_dict["size"] = length   # "size" is less readable here, but more readable in the output
+            msg_dict[
+                "size"
+            ] = length  # "size" is less readable here, but more readable in the output
 
             msg_ser = BytesIO(f_in.read(length))
 
@@ -134,7 +154,10 @@ def process_file(path: str, messages: List[Any], recv: bool, progress_bar: Optio
                 msg_dict["body"] = msg_ser.read().hex()
                 msg_dict["error"] = "Unrecognized message type."
                 messages.append(msg_dict)
-                print(f"WARNING - Unrecognized message type {msgtype} in {path}", file=sys.stderr)
+                print(
+                    f"WARNING - Unrecognized message type {msgtype} in {path}",
+                    file=sys.stderr,
+                )
                 continue
 
             # Deserialize the message
@@ -151,7 +174,10 @@ def process_file(path: str, messages: List[Any], recv: bool, progress_bar: Optio
                 msg_dict["body"] = msg_ser.read().hex()
                 msg_dict["error"] = "Unable to deserialize message."
                 messages.append(msg_dict)
-                print(f"WARNING - Unable to deserialize message in {path}", file=sys.stderr)
+                print(
+                    f"WARNING - Unable to deserialize message in {path}",
+                    file=sys.stderr,
+                )
                 continue
 
             # Convert body of message into a jsonable object
@@ -162,7 +188,7 @@ def process_file(path: str, messages: List[Any], recv: bool, progress_bar: Optio
         if progress_bar:
             # Update the progress bar to the end of the current file
             # in case we exited the loop early
-            f_in.seek(0, os.SEEK_END)   # Go to end of file
+            f_in.seek(0, os.SEEK_END)  # Go to end of file
             diff = f_in.tell() - bytes_read - 1
             progress_bar.update(diff)
 
@@ -170,25 +196,31 @@ def process_file(path: str, messages: List[Any], recv: bool, progress_bar: Optio
 def main():
     parser = argparse.ArgumentParser(
         description=__doc__,
-        epilog="EXAMPLE \n\t{0} -o out.json <data-dir>/message_capture/**/*.dat".format(sys.argv[0]),
-        formatter_class=argparse.RawTextHelpFormatter)
+        epilog="EXAMPLE \n\t{0} -o out.json <data-dir>/message_capture/**/*.dat".format(
+            sys.argv[0]
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
     parser.add_argument(
-        "capturepaths",
-        nargs='+',
-        help="binary message capture files to parse.")
+        "capturepaths", nargs="+", help="binary message capture files to parse."
+    )
     parser.add_argument(
-        "-o", "--output",
-        help="output file.  If unset print to stdout")
+        "-o", "--output", help="output file.  If unset print to stdout"
+    )
     parser.add_argument(
-        "-n", "--no-progress-bar",
-        action='store_true',
-        help="disable the progress bar.  Automatically set if the output is not a terminal")
+        "-n",
+        "--no-progress-bar",
+        action="store_true",
+        help="disable the progress bar.  Automatically set if the output is not a terminal",
+    )
     args = parser.parse_args()
-    capturepaths = [Path.cwd() / Path(capturepath) for capturepath in args.capturepaths]
+    capturepaths = [
+        Path.cwd() / Path(capturepath) for capturepath in args.capturepaths
+    ]
     output = Path.cwd() / Path(args.output) if args.output else False
     use_progress_bar = (not args.no_progress_bar) and sys.stdout.isatty()
 
-    messages = []   # type: List[Any]
+    messages = []  # type: List[Any]
     if use_progress_bar:
         total_size = sum(capture.stat().st_size for capture in capturepaths)
         progress_bar = ProgressBar(total_size)
@@ -196,19 +228,22 @@ def main():
         progress_bar = None
 
     for capture in capturepaths:
-        process_file(str(capture), messages, "recv" in capture.stem, progress_bar)
+        process_file(
+            str(capture), messages, "recv" in capture.stem, progress_bar
+        )
 
-    messages.sort(key=lambda msg: msg['time'])
+    messages.sort(key=lambda msg: msg["time"])
 
     if use_progress_bar:
         progress_bar.set_progress(1)
 
     jsonrep = json.dumps(messages)
     if output:
-        with open(str(output), 'w+', encoding="utf8") as f_out:
+        with open(str(output), "w+", encoding="utf8") as f_out:
             f_out.write(jsonrep)
     else:
         print(jsonrep)
+
 
 if __name__ == "__main__":
     main()

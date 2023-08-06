@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022 The Bitcoin Core developers
+# Copyright (c) 2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-""" Example logging Bitcoin Core mempool events using the mempool:added,
+""" Example logging Sugarchain Core mempool events using the mempool:added,
     mempool:removed, mempool:replaced, and mempool:rejected tracepoints. """
 
 import curses
@@ -114,16 +114,24 @@ int trace_replaced(struct pt_regs *ctx) {
 """
 
 
-def main(bitcoind_path):
-    bitcoind_with_usdts = USDT(path=str(bitcoind_path))
+def main(sugarchaind_path):
+    sugarchaind_with_usdts = USDT(path=str(sugarchaind_path))
 
     # attaching the trace functions defined in the BPF program
     # to the tracepoints
-    bitcoind_with_usdts.enable_probe(probe="mempool:added", fn_name="trace_added")
-    bitcoind_with_usdts.enable_probe(probe="mempool:removed", fn_name="trace_removed")
-    bitcoind_with_usdts.enable_probe(probe="mempool:replaced", fn_name="trace_replaced")
-    bitcoind_with_usdts.enable_probe(probe="mempool:rejected", fn_name="trace_rejected")
-    bpf = BPF(text=PROGRAM, usdt_contexts=[bitcoind_with_usdts])
+    sugarchaind_with_usdts.enable_probe(
+        probe="mempool:added", fn_name="trace_added"
+    )
+    sugarchaind_with_usdts.enable_probe(
+        probe="mempool:removed", fn_name="trace_removed"
+    )
+    sugarchaind_with_usdts.enable_probe(
+        probe="mempool:replaced", fn_name="trace_replaced"
+    )
+    sugarchaind_with_usdts.enable_probe(
+        probe="mempool:rejected", fn_name="trace_rejected"
+    )
+    bpf = BPF(text=PROGRAM, usdt_contexts=[sugarchaind_with_usdts])
 
     events = []
 
@@ -181,8 +189,18 @@ class Dashboard:
         curses.curs_set(False)
         self._screen = screen
         self._time_started = datetime.now(timezone.utc)
-        self._timestamps = {"added": [], "removed": [], "rejected": [], "replaced": []}
-        self._event_history = {"added": 0, "removed": 0, "rejected": 0, "replaced": 0}
+        self._timestamps = {
+            "added": [],
+            "removed": [],
+            "rejected": [],
+            "replaced": [],
+        }
+        self._event_history = {
+            "added": 0,
+            "removed": 0,
+            "rejected": 0,
+            "replaced": 0,
+        }
         self._init_windows()
 
     def _init_windows(self):
@@ -213,22 +231,36 @@ class Dashboard:
     def _init_event_count_win(self):
         """Create and populate the event count window."""
         self._event_count_win = Dashboard.create_win(
-            x=3, y=1, height=Dashboard.EVENT_WIN_HEIGHT, width=37, title="Event count"
+            x=3,
+            y=1,
+            height=Dashboard.EVENT_WIN_HEIGHT,
+            width=37,
+            title="Event count",
         )
         header = " {:<8} {:>8} {:>7} {:>7} "
         self._event_count_win.addstr(
-            1, 1, header.format("Event", "total", "1 min", "10 min"), curses.A_UNDERLINE
+            1,
+            1,
+            header.format("Event", "total", "1 min", "10 min"),
+            curses.A_UNDERLINE,
         )
         self._event_count_win.refresh()
 
     def _init_event_rate_win(self):
         """Create and populate the event rate window."""
         self._event_rate_win = Dashboard.create_win(
-            x=3, y=40, height=Dashboard.EVENT_WIN_HEIGHT, width=42, title="Event rate"
+            x=3,
+            y=40,
+            height=Dashboard.EVENT_WIN_HEIGHT,
+            width=42,
+            title="Event rate",
         )
         header = " {:<8} {:>9} {:>9} {:>9} "
         self._event_rate_win.addstr(
-            1, 1, header.format("Event", "total", "1 min", "10 min"), curses.A_UNDERLINE
+            1,
+            1,
+            header.format("Event", "total", "1 min", "10 min"),
+            curses.A_UNDERLINE,
         )
         self._event_rate_win.refresh()
 
@@ -237,7 +269,9 @@ class Dashboard:
         inset window so line breaks don't overwrite box."""
         # dummy boxed window
         num_rows, num_cols = self._screen.getmaxyx()
-        space_above = Dashboard.INFO_WIN_HEIGHT + 1 + Dashboard.EVENT_WIN_HEIGHT + 1
+        space_above = (
+            Dashboard.INFO_WIN_HEIGHT + 1 + Dashboard.EVENT_WIN_HEIGHT + 1
+        )
         box_win_height = num_rows - space_above
         box_win_width = num_cols - 2
         win_box = Dashboard.create_win(
@@ -289,7 +323,9 @@ class Dashboard:
         """Update the event count window."""
         w = self._event_count_win
         row_format = " {:<8} {:>6}tx {:>5}tx {:>5}tx "
-        for line, metric in enumerate(["added", "removed", "replaced", "rejected"]):
+        for line, metric in enumerate(
+            ["added", "removed", "replaced", "rejected"]
+        ):
             w.addstr(2 + line, 1, row_format.format(metric, *count[metric]))
         w.refresh()
 
@@ -297,7 +333,9 @@ class Dashboard:
         """Update the event rate window."""
         w = self._event_rate_win
         row_format = " {:<8} {:>5.1f}tx/s {:>5.1f}tx/s {:>5.1f}tx/s "
-        for line, metric in enumerate(["added", "removed", "replaced", "rejected"]):
+        for line, metric in enumerate(
+            ["added", "removed", "replaced", "rejected"]
+        ):
             w.addstr(2 + line, 1, row_format.format(metric, *rate[metric]))
         w.refresh()
 
@@ -365,7 +403,7 @@ class Dashboard:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("USAGE: ", sys.argv[0], "path/to/bitcoind")
+        print("USAGE: ", sys.argv[0], "path/to/sugarchaind")
         exit(1)
 
     path = sys.argv[1]

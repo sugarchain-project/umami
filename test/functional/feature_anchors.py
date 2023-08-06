@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020-2021 The Bitcoin Core developers
+# Copyright (c) 2020-2021 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test block-relay-only anchors functionality"""
@@ -7,14 +7,14 @@
 import os
 
 from test_framework.p2p import P2PInterface
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import check_node_connections
 
 INBOUND_CONNECTIONS = 5
 BLOCK_RELAY_CONNECTIONS = 2
 
 
-class AnchorsTest(BitcoinTestFramework):
+class AnchorsTest(SugarchainTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.disable_autoconnect = False
@@ -27,7 +27,9 @@ class AnchorsTest(BitcoinTestFramework):
         self.log.info("When node starts, check if anchors.dat doesn't exist")
         assert not os.path.exists(node_anchors_path)
 
-        self.log.info(f"Add {BLOCK_RELAY_CONNECTIONS} block-relay-only connections to node")
+        self.log.info(
+            f"Add {BLOCK_RELAY_CONNECTIONS} block-relay-only connections to node"
+        )
         for i in range(BLOCK_RELAY_CONNECTIONS):
             self.log.debug(f"block-relay-only: {i}")
             self.nodes[0].add_outbound_p2p_connection(
@@ -75,7 +77,9 @@ class AnchorsTest(BitcoinTestFramework):
         self.log.info("Start node")
         self.start_node(0)
 
-        self.log.info("When node starts, check if anchors.dat doesn't exist anymore")
+        self.log.info(
+            "When node starts, check if anchors.dat doesn't exist anymore"
+        )
         assert not os.path.exists(node_anchors_path)
 
 

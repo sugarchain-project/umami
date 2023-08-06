@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020-2022 The Bitcoin Core developers
+# Copyright (c) 2020-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test orphaned block rewards in the wallet."""
 
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import assert_equal
 
-class OrphanedBlockRewardTest(BitcoinTestFramework):
+
+class OrphanedBlockRewardTest(SugarchainTestFramework):
     def add_options(self, parser):
         self.add_wallet_options(parser)
 
@@ -45,18 +46,25 @@ class OrphanedBlockRewardTest(BitcoinTestFramework):
         blocks = self.generate(self.nodes[0], 152)
         conflict_block = blocks[0]
         # We expect the descendants of orphaned rewards to no longer be considered
-        assert_equal(self.nodes[1].getbalances()["mine"], {
-          "trusted": 10,
-          "untrusted_pending": 0,
-          "immature": 0,
-        })
+        assert_equal(
+            self.nodes[1].getbalances()["mine"],
+            {
+                "trusted": 10,
+                "untrusted_pending": 0,
+                "immature": 0,
+            },
+        )
         # And the unconfirmed tx to be abandoned
-        assert_equal(self.nodes[1].gettransaction(txid)["details"][0]["abandoned"], True)
+        assert_equal(
+            self.nodes[1].gettransaction(txid)["details"][0]["abandoned"], True
+        )
 
         # The abandoning should persist through reloading
         self.nodes[1].unloadwallet(self.default_wallet_name)
         self.nodes[1].loadwallet(self.default_wallet_name)
-        assert_equal(self.nodes[1].gettransaction(txid)["details"][0]["abandoned"], True)
+        assert_equal(
+            self.nodes[1].gettransaction(txid)["details"][0]["abandoned"], True
+        )
 
         # If the orphaned reward is reorged back into the main chain, any unconfirmed
         # descendant txs at the time of the original reorg remain abandoned.
@@ -66,8 +74,10 @@ class OrphanedBlockRewardTest(BitcoinTestFramework):
         self.generate(self.nodes[0], 3)
 
         assert_equal(self.nodes[1].getbalances(), pre_reorg_conf_bals)
-        assert_equal(self.nodes[1].gettransaction(txid)["details"][0]["abandoned"], True)
+        assert_equal(
+            self.nodes[1].gettransaction(txid)["details"][0]["abandoned"], True
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     OrphanedBlockRewardTest().main()

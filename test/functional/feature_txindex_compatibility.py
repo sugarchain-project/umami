@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021-2022 The Bitcoin Core developers
+# Copyright (c) 2021-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test that legacy txindex will be disabled on upgrade.
@@ -10,11 +10,11 @@ Previous releases are required by this test, see test/README.md.
 import os
 import shutil
 
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.wallet import MiniWallet
 
 
-class TxindexCompatibilityTest(BitcoinTestFramework):
+class TxindexCompatibilityTest(SugarchainTestFramework):
     def set_test_params(self):
         self.num_nodes = 3
         self.extra_args = [
@@ -43,11 +43,15 @@ class TxindexCompatibilityTest(BitcoinTestFramework):
     def run_test(self):
         mini_wallet = MiniWallet(self.nodes[1])
         spend_utxo = mini_wallet.get_utxo()
-        mini_wallet.send_self_transfer(from_node=self.nodes[1], utxo_to_spend=spend_utxo)
+        mini_wallet.send_self_transfer(
+            from_node=self.nodes[1], utxo_to_spend=spend_utxo
+        )
         self.generate(self.nodes[1], 1)
 
         self.log.info("Check legacy txindex")
-        self.nodes[0].getrawtransaction(txid=spend_utxo["txid"])  # Requires -txindex
+        self.nodes[0].getrawtransaction(
+            txid=spend_utxo["txid"]
+        )  # Requires -txindex
 
         self.stop_nodes()
         legacy_chain_dir = os.path.join(self.nodes[0].datadir, self.chain)
@@ -56,12 +60,16 @@ class TxindexCompatibilityTest(BitcoinTestFramework):
         migrate_chain_dir = os.path.join(self.nodes[2].datadir, self.chain)
         shutil.rmtree(migrate_chain_dir)
         shutil.copytree(legacy_chain_dir, migrate_chain_dir)
-        with self.nodes[2].assert_debug_log([
+        with self.nodes[2].assert_debug_log(
+            [
                 "Upgrading txindex database...",
                 "txindex is enabled at height 200",
-        ]):
+            ]
+        ):
             self.start_node(2, extra_args=["-txindex"])
-        self.nodes[2].getrawtransaction(txid=spend_utxo["txid"])  # Requires -txindex
+        self.nodes[2].getrawtransaction(
+            txid=spend_utxo["txid"]
+        )  # Requires -txindex
 
         self.log.info("Drop legacy txindex")
         drop_index_chain_dir = os.path.join(self.nodes[1].datadir, self.chain)
@@ -73,7 +81,9 @@ class TxindexCompatibilityTest(BitcoinTestFramework):
         )
         # Build txindex from scratch and check there is no error this time
         self.start_node(1, extra_args=["-txindex"])
-        self.nodes[2].getrawtransaction(txid=spend_utxo["txid"])  # Requires -txindex
+        self.nodes[2].getrawtransaction(
+            txid=spend_utxo["txid"]
+        )  # Requires -txindex
 
         self.stop_nodes()
 
@@ -81,10 +91,14 @@ class TxindexCompatibilityTest(BitcoinTestFramework):
         err_msg = f": You need to rebuild the database using -reindex to change -txindex.{os.linesep}Please restart with -reindex or -reindex-chainstate to recover."
         shutil.rmtree(legacy_chain_dir)
         shutil.copytree(migrate_chain_dir, legacy_chain_dir)
-        self.nodes[0].assert_start_raises_init_error(extra_args=["-txindex"], expected_msg=err_msg)
+        self.nodes[0].assert_start_raises_init_error(
+            extra_args=["-txindex"], expected_msg=err_msg
+        )
         shutil.rmtree(legacy_chain_dir)
         shutil.copytree(drop_index_chain_dir, legacy_chain_dir)
-        self.nodes[0].assert_start_raises_init_error(extra_args=["-txindex"], expected_msg=err_msg)
+        self.nodes[0].assert_start_raises_init_error(
+            extra_args=["-txindex"], expected_msg=err_msg
+        )
 
 
 if __name__ == "__main__":

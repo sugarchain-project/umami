@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022 The Bitcoin Core developers
+# Copyright (c) 2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test file system permissions for POSIX platforms.
@@ -8,10 +8,10 @@
 import os
 import stat
 
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 
 
-class PosixFsPermissionsTest(BitcoinTestFramework):
+class PosixFsPermissionsTest(SugarchainTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 1
@@ -22,7 +22,9 @@ class PosixFsPermissionsTest(BitcoinTestFramework):
     def check_directory_permissions(self, dir):
         mode = os.lstat(dir).st_mode
         self.log.info(f"{stat.filemode(mode)} {dir}")
-        assert mode == (stat.S_IFDIR | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        assert mode == (
+            stat.S_IFDIR | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR
+        )
 
     def check_file_permissions(self, file):
         mode = os.lstat(file).st_mode
@@ -39,5 +41,5 @@ class PosixFsPermissionsTest(BitcoinTestFramework):
         self.check_file_permissions(debuglog)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     PosixFsPermissionsTest().main()

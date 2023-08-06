@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022 The Bitcoin Core developers
+# Copyright (c) 2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,12 +7,9 @@
 import os
 
 from test_framework.util import assert_equal, assert_raises_rpc_error
-from test_framework.blocktools import (
-    COINBASE_MATURITY,
-    create_block
-)
+from test_framework.blocktools import COINBASE_MATURITY, create_block
 from test_framework.blocktools import create_coinbase
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 
 from test_framework.script import (
     CScript,
@@ -20,7 +17,8 @@ from test_framework.script import (
     OP_TRUE,
 )
 
-class WalletPruningTest(BitcoinTestFramework):
+
+class WalletPruningTest(SugarchainTestFramework):
     def add_options(self, parser):
         self.add_wallet_options(parser, descriptors=False)
 
@@ -29,8 +27,8 @@ class WalletPruningTest(BitcoinTestFramework):
         self.num_nodes = 2
         self.wallet_names = []
         self.extra_args = [
-            [], # node dedicated to mining
-            ['-prune=550'], # node dedicated to testing pruning
+            [],  # node dedicated to mining
+            ["-prune=550"],  # node dedicated to testing pruning
         ]
 
     def skip_test_if_missing_module(self):
@@ -49,7 +47,11 @@ class WalletPruningTest(BitcoinTestFramework):
             if i.running:
                 i.setmocktime(self.nTime + 600 * n)
         for _ in range(n):
-            block = create_block(hashprev=previousblockhash, ntime=self.nTime, coinbase=create_coinbase(height, script_pubkey=big_script))
+            block = create_block(
+                hashprev=previousblockhash,
+                ntime=self.nTime,
+                coinbase=create_coinbase(height, script_pubkey=big_script),
+            )
             block.solve()
 
             # Submit to the node
@@ -64,7 +66,9 @@ class WalletPruningTest(BitcoinTestFramework):
         self.sync_all()
 
     def test_wallet_import_pruned(self, wallet_name):
-        self.log.info("Make sure we can import wallet when pruned and required blocks are still available")
+        self.log.info(
+            "Make sure we can import wallet when pruned and required blocks are still available"
+        )
 
         wallet_file = wallet_name + ".dat"
         wallet_birthheight = self.get_birthheight(wallet_file)
@@ -73,8 +77,12 @@ class WalletPruningTest(BitcoinTestFramework):
         self.nodes[1].getblock(self.nodes[1].getblockhash(wallet_birthheight))
 
         # Import wallet into pruned node
-        self.nodes[1].createwallet(wallet_name="wallet_pruned", descriptors=False, load_on_startup=True)
-        self.nodes[1].importwallet(os.path.join(self.nodes[0].datadir, wallet_file))
+        self.nodes[1].createwallet(
+            wallet_name="wallet_pruned", descriptors=False, load_on_startup=True
+        )
+        self.nodes[1].importwallet(
+            os.path.join(self.nodes[0].datadir, wallet_file)
+        )
 
         # Make sure that prune node's wallet correctly accounts for balances
         assert_equal(self.nodes[1].getbalance(), self.nodes[0].getbalance())
@@ -82,37 +90,64 @@ class WalletPruningTest(BitcoinTestFramework):
         self.log.info("- Done")
 
     def test_wallet_import_pruned_with_missing_blocks(self, wallet_name):
-        self.log.info("Make sure we cannot import wallet when pruned and required blocks are not available")
+        self.log.info(
+            "Make sure we cannot import wallet when pruned and required blocks are not available"
+        )
 
         wallet_file = wallet_name + ".dat"
         wallet_birthheight = self.get_birthheight(wallet_file)
 
         # Verify that the block at wallet's birthheight is not available at the pruned node
-        assert_raises_rpc_error(-1, "Block not available (pruned data)", self.nodes[1].getblock, self.nodes[1].getblockhash(wallet_birthheight))
+        assert_raises_rpc_error(
+            -1,
+            "Block not available (pruned data)",
+            self.nodes[1].getblock,
+            self.nodes[1].getblockhash(wallet_birthheight),
+        )
 
         # Make sure wallet cannot be imported because of missing blocks
         # This will try to rescan blocks `TIMESTAMP_WINDOW` (2h) before the wallet birthheight.
         # There are 6 blocks an hour, so 11 blocks (excluding birthheight).
-        assert_raises_rpc_error(-4, f"Pruned blocks from height {wallet_birthheight - 11} required to import keys. Use RPC call getblockchaininfo to determine your pruned height.", self.nodes[1].importwallet, os.path.join(self.nodes[0].datadir, wallet_file))
+        assert_raises_rpc_error(
+            -4,
+            f"Pruned blocks from height {wallet_birthheight - 11} required to import keys. Use RPC call getblockchaininfo to determine your pruned height.",
+            self.nodes[1].importwallet,
+            os.path.join(self.nodes[0].datadir, wallet_file),
+        )
         self.log.info("- Done")
 
     def get_birthheight(self, wallet_file):
         """Gets birthheight of a wallet on node0"""
-        with open(os.path.join(self.nodes[0].datadir, wallet_file), 'r', encoding="utf8") as f:
+        with open(
+            os.path.join(self.nodes[0].datadir, wallet_file),
+            "r",
+            encoding="utf8",
+        ) as f:
             for line in f:
-                if line.startswith('# * Best block at time of backup'):
-                    wallet_birthheight = int(line.split(' ')[9])
+                if line.startswith("# * Best block at time of backup"):
+                    wallet_birthheight = int(line.split(" ")[9])
                     return wallet_birthheight
 
     def has_block(self, block_index):
         """Checks if the pruned node has the specific blk0000*.dat file"""
-        return os.path.isfile(os.path.join(self.nodes[1].datadir, self.chain, "blocks", f"blk{block_index:05}.dat"))
+        return os.path.isfile(
+            os.path.join(
+                self.nodes[1].datadir,
+                self.chain,
+                "blocks",
+                f"blk{block_index:05}.dat",
+            )
+        )
 
     def create_wallet(self, wallet_name, *, unload=False):
         """Creates and dumps a wallet on the non-pruned node0 to be later import by the pruned node"""
-        self.nodes[0].createwallet(wallet_name=wallet_name, descriptors=False, load_on_startup=True)
-        self.nodes[0].dumpwallet(os.path.join(self.nodes[0].datadir, wallet_name + ".dat"))
-        if (unload):
+        self.nodes[0].createwallet(
+            wallet_name=wallet_name, descriptors=False, load_on_startup=True
+        )
+        self.nodes[0].dumpwallet(
+            os.path.join(self.nodes[0].datadir, wallet_name + ".dat")
+        )
+        if unload:
             self.nodes[0].unloadwallet(wallet_name)
 
     def run_test(self):
@@ -142,7 +177,12 @@ class WalletPruningTest(BitcoinTestFramework):
         self.create_wallet(wallet_birthheight_2)
 
         # Fund wallet to later verify that importwallet correctly accounts for balances
-        self.generatetoaddress(self.nodes[0], COINBASE_MATURITY + 1, self.nodes[0].getnewaddress(), sync_fun=self.no_op)
+        self.generatetoaddress(
+            self.nodes[0],
+            COINBASE_MATURITY + 1,
+            self.nodes[0].getnewaddress(),
+            sync_fun=self.no_op,
+        )
 
         # We've reached pruning storage & height limit but
         # pruning doesn't run until another chunk (blk*.dat file) is allocated.
@@ -155,5 +195,6 @@ class WalletPruningTest(BitcoinTestFramework):
         self.test_wallet_import_pruned(wallet_birthheight_2)
         self.test_wallet_import_pruned_with_missing_blocks(wallet_birthheight_1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     WalletPruningTest().main()

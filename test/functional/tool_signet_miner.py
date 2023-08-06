@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022 The Bitcoin Core developers
+# Copyright (c) 2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test signet miner tool"""
@@ -11,15 +11,15 @@ import time
 
 from test_framework.key import ECKey
 from test_framework.script_util import key_to_p2wpkh_script
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import assert_equal
 from test_framework.wallet_util import bytes_to_wif
 
 
-CHALLENGE_PRIVATE_KEY = (42).to_bytes(32, 'big')
+CHALLENGE_PRIVATE_KEY = (42).to_bytes(32, "big")
 
 
-class SignetMinerTest(BitcoinTestFramework):
+class SignetMinerTest(SugarchainTestFramework):
     def add_options(self, parser):
         self.add_wallet_options(parser)
 
@@ -33,12 +33,12 @@ class SignetMinerTest(BitcoinTestFramework):
         privkey.set(CHALLENGE_PRIVATE_KEY, True)
         pubkey = privkey.get_pubkey().get_bytes()
         challenge = key_to_p2wpkh_script(pubkey)
-        self.extra_args = [[f'-signetchallenge={challenge.hex()}']]
+        self.extra_args = [[f"-signetchallenge={challenge.hex()}"]]
 
     def skip_test_if_missing_module(self):
         self.skip_if_no_cli()
         self.skip_if_no_wallet()
-        self.skip_if_no_bitcoin_util()
+        self.skip_if_no_sugarchain_util()
 
     def run_test(self):
         node = self.nodes[0]
@@ -48,16 +48,20 @@ class SignetMinerTest(BitcoinTestFramework):
         # generate block with signet miner tool
         base_dir = self.config["environment"]["SRCDIR"]
         signet_miner_path = os.path.join(base_dir, "contrib", "signet", "miner")
-        subprocess.run([
+        subprocess.run(
+            [
                 sys.executable,
                 signet_miner_path,
-                f'--cli={node.cli.binary} -datadir={node.cli.datadir}',
-                'generate',
-                f'--address={node.getnewaddress()}',
-                f'--grind-cmd={self.options.bitcoinutil} grind',
-                '--nbits=1d00ffff',
-                f'--set-block-time={int(time.time())}',
-            ], check=True, stderr=subprocess.STDOUT)
+                f"--cli={node.cli.binary} -datadir={node.cli.datadir}",
+                "generate",
+                f"--address={node.getnewaddress()}",
+                f"--grind-cmd={self.options.sugarchainutil} grind",
+                "--nbits=1d00ffff",
+                f"--set-block-time={int(time.time())}",
+            ],
+            check=True,
+            stderr=subprocess.STDOUT,
+        )
         assert_equal(node.getblockcount(), 1)
 
 

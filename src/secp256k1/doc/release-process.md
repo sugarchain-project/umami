@@ -22,7 +22,7 @@ This process also assumes that there will be no minor releases for old major rel
    ```
    RELEASE_COMMIT=<merge commit of step 1>
    git tag -s v$MAJOR.$MINOR.$PATCH -m "libsecp256k1 $MAJOR.$MINOR.$PATCH" $RELEASE_COMMIT
-   git push git@github.com:bitcoin-core/secp256k1.git v$MAJOR.$MINOR.$PATCH
+   git push git@github.com:sugarchain-core/secp256k1.git v$MAJOR.$MINOR.$PATCH
    ```
 3. Open a PR to the master branch with a commit (using message `"release cleanup: bump version after $MAJOR.$MINOR.$PATCH"`, for example) that
    * sets `_PKG_VERSION_IS_RELEASE` to `false` and increments `_PKG_VERSION_PATCH` and `_LIB_VERSION_REVISION` in `configure.ac`, and
@@ -38,7 +38,7 @@ Note that bugfixes only need to be backported to releases for which no compatibl
 1. If `$PATCH = 1`, create maintenance branch `$MAJOR.$MINOR`:
    ```
    git checkout -b $MAJOR.$MINOR v$MAJOR.$MINOR.0
-   git push git@github.com:bitcoin-core/secp256k1.git $MAJOR.$MINOR
+   git push git@github.com:sugarchain-core/secp256k1.git $MAJOR.$MINOR
    ```
 2. Open a pull request to the `$MAJOR.$MINOR` branch that
    * includes the bugfixes,
@@ -53,7 +53,7 @@ Note that bugfixes only need to be backported to releases for which no compatibl
    ```
 4. Push tag:
    ```
-   git push git@github.com:bitcoin-core/secp256k1.git v$MAJOR.$MINOR.$PATCH
+   git push git@github.com:sugarchain-core/secp256k1.git v$MAJOR.$MINOR.$PATCH
    ```
 5. Create a new GitHub release with a link to the corresponding entry in [CHANGELOG.md](../CHANGELOG.md).
 6. Open PR to the master branch that includes a commit (with commit message `"release notes: add $MAJOR.$MINOR.$PATCH"`, for example) that adds release notes to [CHANGELOG.md](../CHANGELOG.md).

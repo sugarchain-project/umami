@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2022 The Bitcoin Core developers
+# Copyright (c) 2015-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test processing of unrequested blocks.
@@ -53,17 +53,28 @@ Node1 is unused in tests 3-7:
 
 import time
 
-from test_framework.blocktools import create_block, create_coinbase, create_tx_with_script
-from test_framework.messages import CBlockHeader, CInv, MSG_BLOCK, msg_block, msg_headers, msg_inv
+from test_framework.blocktools import (
+    create_block,
+    create_coinbase,
+    create_tx_with_script,
+)
+from test_framework.messages import (
+    CBlockHeader,
+    CInv,
+    MSG_BLOCK,
+    msg_block,
+    msg_headers,
+    msg_inv,
+)
 from test_framework.p2p import p2p_lock, P2PInterface
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import (
     assert_equal,
     assert_raises_rpc_error,
 )
 
 
-class AcceptBlockTest(BitcoinTestFramework):
+class AcceptBlockTest(SugarchainTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2
@@ -92,37 +103,59 @@ class AcceptBlockTest(BitcoinTestFramework):
         blocks_h2 = []  # the height 2 blocks on each node's chain
         block_time = int(time.time()) + 1
         for i in range(2):
-            blocks_h2.append(create_block(tips[i], create_coinbase(2), block_time))
+            blocks_h2.append(
+                create_block(tips[i], create_coinbase(2), block_time)
+            )
             blocks_h2[i].solve()
             block_time += 1
         test_node.send_and_ping(msg_block(blocks_h2[0]))
 
-        with self.nodes[1].assert_debug_log(expected_msgs=[f"AcceptBlockHeader: not adding new block header {blocks_h2[1].hash}, missing anti-dos proof-of-work validation"]):
+        with self.nodes[1].assert_debug_log(
+            expected_msgs=[
+                f"AcceptBlockHeader: not adding new block header {blocks_h2[1].hash}, missing anti-dos proof-of-work validation"
+            ]
+        ):
             min_work_node.send_and_ping(msg_block(blocks_h2[1]))
 
         assert_equal(self.nodes[0].getblockcount(), 2)
         assert_equal(self.nodes[1].getblockcount(), 1)
 
         # Ensure that the header of the second block was also not accepted by node1
-        assert_equal(self.check_hash_in_chaintips(self.nodes[1], blocks_h2[1].hash), False)
-        self.log.info("First height 2 block accepted by node0; correctly rejected by node1")
+        assert_equal(
+            self.check_hash_in_chaintips(self.nodes[1], blocks_h2[1].hash),
+            False,
+        )
+        self.log.info(
+            "First height 2 block accepted by node0; correctly rejected by node1"
+        )
 
         # 3. Send another block that builds on genesis.
-        block_h1f = create_block(int("0x" + self.nodes[0].getblockhash(0), 0), create_coinbase(1), block_time)
+        block_h1f = create_block(
+            int("0x" + self.nodes[0].getblockhash(0), 0),
+            create_coinbase(1),
+            block_time,
+        )
         block_time += 1
         block_h1f.solve()
         test_node.send_and_ping(msg_block(block_h1f))
 
         tip_entry_found = False
         for x in self.nodes[0].getchaintips():
-            if x['hash'] == block_h1f.hash:
-                assert_equal(x['status'], "headers-only")
+            if x["hash"] == block_h1f.hash:
+                assert_equal(x["status"], "headers-only")
                 tip_entry_found = True
         assert tip_entry_found
-        assert_raises_rpc_error(-1, "Block not found on disk", self.nodes[0].getblock, block_h1f.hash)
+        assert_raises_rpc_error(
+            -1,
+            "Block not found on disk",
+            self.nodes[0].getblock,
+            block_h1f.hash,
+        )
 
         # 4. Send another two block that build on the fork.
-        block_h2f = create_block(block_h1f.sha256, create_coinbase(2), block_time)
+        block_h2f = create_block(
+            block_h1f.sha256, create_coinbase(2), block_time
+        )
         block_time += 1
         block_h2f.solve()
         test_node.send_and_ping(msg_block(block_h2f))
@@ -131,8 +164,8 @@ class AcceptBlockTest(BitcoinTestFramework):
         # can't be fully validated.
         tip_entry_found = False
         for x in self.nodes[0].getchaintips():
-            if x['hash'] == block_h2f.hash:
-                assert_equal(x['status'], "headers-only")
+            if x["hash"] == block_h2f.hash:
+                assert_equal(x["status"], "headers-only")
                 tip_entry_found = True
         assert tip_entry_found
 
@@ -141,7 +174,9 @@ class AcceptBlockTest(BitcoinTestFramework):
         self.log.info("Second height 2 block accepted, but not reorg'ed to")
 
         # 4b. Now send another block that builds on the forking chain.
-        block_h3 = create_block(block_h2f.sha256, create_coinbase(3), block_h2f.nTime+1)
+        block_h3 = create_block(
+            block_h2f.sha256, create_coinbase(3), block_h2f.nTime + 1
+        )
         block_h3.solve()
         test_node.send_and_ping(msg_block(block_h3))
 
@@ -149,8 +184,8 @@ class AcceptBlockTest(BitcoinTestFramework):
         # can't be fully validated.
         tip_entry_found = False
         for x in self.nodes[0].getchaintips():
-            if x['hash'] == block_h3.hash:
-                assert_equal(x['status'], "headers-only")
+            if x["hash"] == block_h3.hash:
+                assert_equal(x["status"], "headers-only")
                 tip_entry_found = True
         assert tip_entry_found
         self.nodes[0].getblock(block_h3.hash)
@@ -164,15 +199,24 @@ class AcceptBlockTest(BitcoinTestFramework):
         tip = block_h3
         all_blocks = []
         for i in range(288):
-            next_block = create_block(tip.sha256, create_coinbase(i + 4), tip.nTime+1)
+            next_block = create_block(
+                tip.sha256, create_coinbase(i + 4), tip.nTime + 1
+            )
             next_block.solve()
             all_blocks.append(next_block)
             tip = next_block
 
         # Now send the block at height 5 and check that it wasn't accepted (missing header)
         test_node.send_and_ping(msg_block(all_blocks[1]))
-        assert_raises_rpc_error(-5, "Block not found", self.nodes[0].getblock, all_blocks[1].hash)
-        assert_raises_rpc_error(-5, "Block not found", self.nodes[0].getblockheader, all_blocks[1].hash)
+        assert_raises_rpc_error(
+            -5, "Block not found", self.nodes[0].getblock, all_blocks[1].hash
+        )
+        assert_raises_rpc_error(
+            -5,
+            "Block not found",
+            self.nodes[0].getblockheader,
+            all_blocks[1].hash,
+        )
 
         # The block at height 5 should be accepted if we provide the missing header, though
         headers_message = msg_headers()
@@ -189,7 +233,12 @@ class AcceptBlockTest(BitcoinTestFramework):
         # Blocks 1-287 should be accepted, block 288 should be ignored because it's too far ahead
         for x in all_blocks[:-1]:
             self.nodes[0].getblock(x.hash)
-        assert_raises_rpc_error(-1, "Block not found on disk", self.nodes[0].getblock, all_blocks[-1].hash)
+        assert_raises_rpc_error(
+            -1,
+            "Block not found on disk",
+            self.nodes[0].getblock,
+            all_blocks[-1].hash,
+        )
 
         # 5. Test handling of unrequested block on the node that didn't process
         # Should still not be processed (even though it has a child that has more
@@ -205,7 +254,9 @@ class AcceptBlockTest(BitcoinTestFramework):
 
         test_node.send_and_ping(msg_block(block_h1f))
         assert_equal(self.nodes[0].getblockcount(), 2)
-        self.log.info("Unrequested block that would complete more-work chain was ignored")
+        self.log.info(
+            "Unrequested block that would complete more-work chain was ignored"
+        )
 
         # 6. Try to get node to request the missing block.
         # Poke the node with an inv for block at height 3 and see if that
@@ -228,20 +279,40 @@ class AcceptBlockTest(BitcoinTestFramework):
         assert_equal(self.nodes[0].getblockcount(), 290)
         self.nodes[0].getblock(all_blocks[286].hash)
         assert_equal(self.nodes[0].getbestblockhash(), all_blocks[286].hash)
-        assert_raises_rpc_error(-1, "Block not found on disk", self.nodes[0].getblock, all_blocks[287].hash)
+        assert_raises_rpc_error(
+            -1,
+            "Block not found on disk",
+            self.nodes[0].getblock,
+            all_blocks[287].hash,
+        )
         self.log.info("Successfully reorged to longer chain")
 
         # 8. Create a chain which is invalid at a height longer than the
         # current chain, but which has more blocks on top of that
-        block_289f = create_block(all_blocks[284].sha256, create_coinbase(289), all_blocks[284].nTime+1)
+        block_289f = create_block(
+            all_blocks[284].sha256,
+            create_coinbase(289),
+            all_blocks[284].nTime + 1,
+        )
         block_289f.solve()
-        block_290f = create_block(block_289f.sha256, create_coinbase(290), block_289f.nTime+1)
+        block_290f = create_block(
+            block_289f.sha256, create_coinbase(290), block_289f.nTime + 1
+        )
         block_290f.solve()
         # block_291 spends a coinbase below maturity!
-        tx_to_add = create_tx_with_script(block_290f.vtx[0], 0, script_sig=b"42", amount=1)
-        block_291 = create_block(block_290f.sha256, create_coinbase(291), block_290f.nTime+1, txlist=[tx_to_add])
+        tx_to_add = create_tx_with_script(
+            block_290f.vtx[0], 0, script_sig=b"42", amount=1
+        )
+        block_291 = create_block(
+            block_290f.sha256,
+            create_coinbase(291),
+            block_290f.nTime + 1,
+            txlist=[tx_to_add],
+        )
         block_291.solve()
-        block_292 = create_block(block_291.sha256, create_coinbase(292), block_291.nTime+1)
+        block_292 = create_block(
+            block_291.sha256, create_coinbase(292), block_291.nTime + 1
+        )
         block_292.solve()
 
         # Now send all the headers on the chain and enough blocks to trigger reorg
@@ -254,11 +325,16 @@ class AcceptBlockTest(BitcoinTestFramework):
 
         tip_entry_found = False
         for x in self.nodes[0].getchaintips():
-            if x['hash'] == block_292.hash:
-                assert_equal(x['status'], "headers-only")
+            if x["hash"] == block_292.hash:
+                assert_equal(x["status"], "headers-only")
                 tip_entry_found = True
         assert tip_entry_found
-        assert_raises_rpc_error(-1, "Block not found on disk", self.nodes[0].getblock, block_292.hash)
+        assert_raises_rpc_error(
+            -1,
+            "Block not found on disk",
+            self.nodes[0].getblock,
+            block_292.hash,
+        )
 
         test_node.send_message(msg_block(block_289f))
         test_node.send_and_ping(msg_block(block_290f))
@@ -278,10 +354,14 @@ class AcceptBlockTest(BitcoinTestFramework):
         # We should have failed reorg and switched back to 290 (but have block 291)
         assert_equal(self.nodes[0].getblockcount(), 290)
         assert_equal(self.nodes[0].getbestblockhash(), all_blocks[286].hash)
-        assert_equal(self.nodes[0].getblock(block_291.hash)["confirmations"], -1)
+        assert_equal(
+            self.nodes[0].getblock(block_291.hash)["confirmations"], -1
+        )
 
         # Now send a new header on the invalid chain, indicating we're forked off, and expect to get disconnected
-        block_293 = create_block(block_292.sha256, create_coinbase(293), block_292.nTime+1)
+        block_293 = create_block(
+            block_292.sha256, create_coinbase(293), block_292.nTime + 1
+        )
         block_293.solve()
         headers_message = msg_headers()
         headers_message.headers.append(CBlockHeader(block_293))
@@ -293,5 +373,6 @@ class AcceptBlockTest(BitcoinTestFramework):
         self.sync_blocks([self.nodes[0], self.nodes[1]])
         self.log.info("Successfully synced nodes 1 and 0")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     AcceptBlockTest().main()

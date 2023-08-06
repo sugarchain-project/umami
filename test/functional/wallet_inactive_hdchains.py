@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021-2022 The Bitcoin Core developers
+# Copyright (c) 2021-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """
@@ -10,13 +10,13 @@ import shutil
 import time
 
 from test_framework.authproxy import JSONRPCException
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.wallet_util import (
     get_generate_key,
 )
 
 
-class InactiveHDChainsTest(BitcoinTestFramework):
+class InactiveHDChainsTest(SugarchainTestFramework):
     def add_options(self, parser):
         self.add_wallet_options(parser, descriptors=False)
 
@@ -31,17 +31,25 @@ class InactiveHDChainsTest(BitcoinTestFramework):
         self.skip_if_no_previous_releases()
 
     def setup_nodes(self):
-        self.add_nodes(self.num_nodes, extra_args=self.extra_args, versions=[
-            None,
-            170200, # 0.17.2 Does not have the key metadata upgrade
-        ])
+        self.add_nodes(
+            self.num_nodes,
+            extra_args=self.extra_args,
+            versions=[
+                None,
+                170200,  # 0.17.2 Does not have the key metadata upgrade
+            ],
+        )
 
         self.start_nodes()
         self.init_wallet(node=0)
 
     def prepare_wallets(self, wallet_basename, encrypt=False):
-        self.nodes[0].createwallet(wallet_name=f"{wallet_basename}_base", descriptors=False, blank=True)
-        self.nodes[0].createwallet(wallet_name=f"{wallet_basename}_test", descriptors=False, blank=True)
+        self.nodes[0].createwallet(
+            wallet_name=f"{wallet_basename}_base", descriptors=False, blank=True
+        )
+        self.nodes[0].createwallet(
+            wallet_name=f"{wallet_basename}_test", descriptors=False, blank=True
+        )
         base_wallet = self.nodes[0].get_wallet_rpc(f"{wallet_basename}_base")
         test_wallet = self.nodes[0].get_wallet_rpc(f"{wallet_basename}_test")
 
@@ -104,15 +112,21 @@ class InactiveHDChainsTest(BitcoinTestFramework):
 
     def test_encrypted_wallet(self):
         self.log.info("Test inactive HD chains when wallet is encrypted")
-        self.do_inactive_test(*self.prepare_wallets("enc", encrypt=True), encrypt=True)
+        self.do_inactive_test(
+            *self.prepare_wallets("enc", encrypt=True), encrypt=True
+        )
 
     def test_without_upgraded_keymeta(self):
         # Test that it is possible to top up inactive hd chains even if there is no key origin
         # in CKeyMetadata. This tests for the segfault reported in
-        # https://github.com/bitcoin/bitcoin/issues/21605
-        self.log.info("Test that topping up inactive HD chains does not need upgraded key origin")
+        # https://github.com/sugarchain/sugarchain/issues/21605
+        self.log.info(
+            "Test that topping up inactive HD chains does not need upgraded key origin"
+        )
 
-        self.nodes[0].createwallet(wallet_name="keymeta_base", descriptors=False, blank=True)
+        self.nodes[0].createwallet(
+            wallet_name="keymeta_base", descriptors=False, blank=True
+        )
         # Createwallet is overridden in the test framework so that the descriptor option can be filled
         # depending on the test's cli args. However we don't want to do that when using old nodes that
         # do not support descriptors. So we use the createwallet_passthrough function.
@@ -130,8 +144,12 @@ class InactiveHDChainsTest(BitcoinTestFramework):
 
         # Copy test wallet to node 0
         test_wallet.unloadwallet()
-        test_wallet_dir = os.path.join(self.nodes[1].datadir, "regtest/wallets/keymeta_test")
-        new_test_wallet_dir = os.path.join(self.nodes[0].datadir, "regtest/wallets/keymeta_test")
+        test_wallet_dir = os.path.join(
+            self.nodes[1].datadir, "regtest/wallets/keymeta_test"
+        )
+        new_test_wallet_dir = os.path.join(
+            self.nodes[0].datadir, "regtest/wallets/keymeta_test"
+        )
         shutil.copytree(test_wallet_dir, new_test_wallet_dir)
         self.nodes[0].loadwallet("keymeta_test")
         test_wallet = self.nodes[0].get_wallet_rpc("keymeta_test")
@@ -146,5 +164,5 @@ class InactiveHDChainsTest(BitcoinTestFramework):
         self.test_without_upgraded_keymeta()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     InactiveHDChainsTest().main()

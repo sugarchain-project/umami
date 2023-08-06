@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2017-2021 The Bitcoin Core developers
+# Copyright (c) 2017-2021 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Tests NODE_NETWORK_LIMITED.
@@ -8,9 +8,16 @@ Tests that a node configured with -prune=550 signals NODE_NETWORK_LIMITED correc
 and that it responds to getdata requests for blocks correctly:
     - send a block within 288 + 2 of the tip
     - disconnect peers who request blocks older than that."""
-from test_framework.messages import CInv, MSG_BLOCK, msg_getdata, msg_verack, NODE_NETWORK_LIMITED, NODE_WITNESS
+from test_framework.messages import (
+    CInv,
+    MSG_BLOCK,
+    msg_getdata,
+    msg_verack,
+    NODE_NETWORK_LIMITED,
+    NODE_WITNESS,
+)
 from test_framework.p2p import P2PInterface
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import (
     assert_equal,
 )
@@ -18,24 +25,29 @@ from test_framework.util import (
 
 class P2PIgnoreInv(P2PInterface):
     firstAddrnServices = 0
+
     def on_inv(self, message):
         # The node will send us invs for other blocks. Ignore them.
         pass
+
     def on_addr(self, message):
         self.firstAddrnServices = message.addrs[0].nServices
+
     def wait_for_addr(self, timeout=5):
         test_function = lambda: self.last_message.get("addr")
         self.wait_until(test_function, timeout=timeout)
+
     def send_getdata_for_block(self, blockhash):
         getdata_request = msg_getdata()
         getdata_request.inv.append(CInv(MSG_BLOCK, int(blockhash, 16)))
         self.send_message(getdata_request)
 
-class NodeNetworkLimitedTest(BitcoinTestFramework):
+
+class NodeNetworkLimitedTest(SugarchainTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 3
-        self.extra_args = [['-prune=550', '-addrmantest'], [], []]
+        self.extra_args = [["-prune=550", "-addrmantest"], [], []]
 
     def disconnect_all(self):
         self.disconnect_nodes(0, 1)
@@ -55,18 +67,31 @@ class NodeNetworkLimitedTest(BitcoinTestFramework):
         assert_equal(node.nServices, expected_services)
 
         self.log.info("Check that the localservices is as expected.")
-        assert_equal(int(self.nodes[0].getnetworkinfo()['localservices'], 16), expected_services)
+        assert_equal(
+            int(self.nodes[0].getnetworkinfo()["localservices"], 16),
+            expected_services,
+        )
 
-        self.log.info("Mine enough blocks to reach the NODE_NETWORK_LIMITED range.")
+        self.log.info(
+            "Mine enough blocks to reach the NODE_NETWORK_LIMITED range."
+        )
         self.connect_nodes(0, 1)
-        blocks = self.generate(self.nodes[1], 292, sync_fun=lambda: self.sync_blocks([self.nodes[0], self.nodes[1]]))
+        blocks = self.generate(
+            self.nodes[1],
+            292,
+            sync_fun=lambda: self.sync_blocks([self.nodes[0], self.nodes[1]]),
+        )
 
         self.log.info("Make sure we can max retrieve block at tip-288.")
         node.send_getdata_for_block(blocks[1])  # last block in valid range
         node.wait_for_block(int(blocks[1], 16), timeout=3)
 
-        self.log.info("Requesting block at height 2 (tip-289) must fail (ignored).")
-        node.send_getdata_for_block(blocks[0])  # first block outside of the 288+2 limit
+        self.log.info(
+            "Requesting block at height 2 (tip-289) must fail (ignored)."
+        )
+        node.send_getdata_for_block(
+            blocks[0]
+        )  # first block outside of the 288+2 limit
         node.wait_for_disconnect(5)
 
         self.log.info("Check local address relay, do a fresh connection.")
@@ -75,7 +100,7 @@ class NodeNetworkLimitedTest(BitcoinTestFramework):
         node1.send_message(msg_verack())
 
         node1.wait_for_addr()
-        #must relay address with NODE_NETWORK_LIMITED
+        # must relay address with NODE_NETWORK_LIMITED
         assert_equal(node1.firstAddrnServices, expected_services)
 
         self.nodes[0].disconnect_p2ps()
@@ -88,7 +113,12 @@ class NodeNetworkLimitedTest(BitcoinTestFramework):
         except Exception:
             pass
         # node2 must remain at height 0
-        assert_equal(self.nodes[2].getblockheader(self.nodes[2].getbestblockhash())['height'], 0)
+        assert_equal(
+            self.nodes[2].getblockheader(self.nodes[2].getbestblockhash())[
+                "height"
+            ],
+            0,
+        )
 
         # now connect also to node 1 (non pruned)
         self.connect_nodes(1, 2)
@@ -108,5 +138,6 @@ class NodeNetworkLimitedTest(BitcoinTestFramework):
         # sync must be possible, node 1 is no longer in IBD and should therefore connect to node 0 (NODE_NETWORK_LIMITED)
         self.sync_blocks([self.nodes[0], self.nodes[1]])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     NodeNetworkLimitedTest().main()

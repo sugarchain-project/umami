@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2020-2022 The Bitcoin Core developers
+# Copyright (c) 2020-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
@@ -23,8 +23,7 @@ EXPECTED_CIRCULAR_DEPENDENCIES = (
     "wallet/wallet -> wallet/walletdb -> wallet/wallet",
     "kernel/coinstats -> validation -> kernel/coinstats",
     "kernel/mempool_persist -> validation -> kernel/mempool_persist",
-
-    # Temporary, removed in followup https://github.com/bitcoin/bitcoin/pull/24230
+    # Temporary, removed in followup https://github.com/sugarchain/sugarchain/pull/24230
     "index/base -> node/context -> net_processing -> index/blockfilterindex -> index/base",
 )
 
@@ -37,11 +36,15 @@ def main():
 
     os.chdir(CODE_DIR)
     files = subprocess.check_output(
-        ['git', 'ls-files', '--', '*.h', '*.cpp'],
+        ["git", "ls-files", "--", "*.h", "*.cpp"],
         text=True,
     ).splitlines()
 
-    command = [sys.executable, "../contrib/devtools/circular-dependencies.py", *files]
+    command = [
+        sys.executable,
+        "../contrib/devtools/circular-dependencies.py",
+        *files,
+    ]
     dependencies_output = subprocess.run(
         command,
         stdout=subprocess.PIPE,

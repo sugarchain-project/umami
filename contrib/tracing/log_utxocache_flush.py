@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021-2022 The Bitcoin Core developers
+# Copyright (c) 2021-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,10 +7,10 @@ import sys
 import ctypes
 from bcc import BPF, USDT
 
-"""Example logging Bitcoin Core utxo set cache flushes utilizing
+"""Example logging Sugarchain Core utxo set cache flushes utilizing
     the utxocache:flush tracepoint."""
 
-# USAGE:  ./contrib/tracing/log_utxocache_flush.py path/to/bitcoind
+# USAGE:  ./contrib/tracing/log_utxocache_flush.py path/to/sugarchaind
 
 # BCC: The C program to be compiled to an eBPF program (by BCC) and loaded into
 # a sandboxed Linux kernel VM.
@@ -41,12 +41,7 @@ int trace_flush(struct pt_regs *ctx) {
 }
 """
 
-FLUSH_MODES = [
-    'NONE',
-    'IF_NEEDED',
-    'PERIODIC',
-    'ALWAYS'
-]
+FLUSH_MODES = ["NONE", "IF_NEEDED", "PERIODIC", "ALWAYS"]
 
 
 class Data(ctypes.Structure):
@@ -56,40 +51,49 @@ class Data(ctypes.Structure):
         ("mode", ctypes.c_uint32),
         ("coins_count", ctypes.c_uint64),
         ("coins_mem_usage", ctypes.c_uint64),
-        ("is_flush_for_prune", ctypes.c_bool)
+        ("is_flush_for_prune", ctypes.c_bool),
     ]
 
 
 def print_event(event):
-    print("%-15d %-10s %-15d %-15s %-8s" % (
-        event.duration,
-        FLUSH_MODES[event.mode],
-        event.coins_count,
-        "%.2f kB" % (event.coins_mem_usage/1000),
-        event.is_flush_for_prune
-    ))
+    print(
+        "%-15d %-10s %-15d %-15s %-8s"
+        % (
+            event.duration,
+            FLUSH_MODES[event.mode],
+            event.coins_count,
+            "%.2f kB" % (event.coins_mem_usage / 1000),
+            event.is_flush_for_prune,
+        )
+    )
 
 
-def main(bitcoind_path):
-    bitcoind_with_usdts = USDT(path=str(bitcoind_path))
+def main(sugarchaind_path):
+    sugarchaind_with_usdts = USDT(path=str(sugarchaind_path))
 
     # attaching the trace functions defined in the BPF program
     # to the tracepoints
-    bitcoind_with_usdts.enable_probe(
-        probe="flush", fn_name="trace_flush")
-    b = BPF(text=program, usdt_contexts=[bitcoind_with_usdts])
+    sugarchaind_with_usdts.enable_probe(probe="flush", fn_name="trace_flush")
+    b = BPF(text=program, usdt_contexts=[sugarchaind_with_usdts])
 
     def handle_flush(_, data, size):
-        """ Coins Flush handler.
-          Called each time coin caches and indexes are flushed."""
+        """Coins Flush handler.
+        Called each time coin caches and indexes are flushed."""
         event = ctypes.cast(data, ctypes.POINTER(Data)).contents
         print_event(event)
 
     b["flush"].open_perf_buffer(handle_flush)
     print("Logging utxocache flushes. Ctrl-C to end...")
-    print("%-15s %-10s %-15s %-15s %-8s" % ("Duration (µs)", "Mode",
-                                            "Coins Count", "Memory Usage",
-                                            "Flush for Prune"))
+    print(
+        "%-15s %-10s %-15s %-15s %-8s"
+        % (
+            "Duration (µs)",
+            "Mode",
+            "Coins Count",
+            "Memory Usage",
+            "Flush for Prune",
+        )
+    )
 
     while True:
         try:
@@ -100,7 +104,7 @@ def main(bitcoind_path):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("USAGE: ", sys.argv[0], "path/to/bitcoind")
+        print("USAGE: ", sys.argv[0], "path/to/sugarchaind")
         exit(1)
 
     path = sys.argv[1]

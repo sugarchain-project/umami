@@ -1,15 +1,15 @@
-// Copyright (c) 2022 The Bitcoin Core developers
+// Copyright (c) 2022 The Sugarchain Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 //
-// The bitcoin-chainstate executable serves to surface the dependencies required
-// by a program wishing to use Bitcoin Core's consensus engine as it is right
+// The sugarchain-chainstate executable serves to surface the dependencies required
+// by a program wishing to use Sugarchain Core's consensus engine as it is right
 // now.
 //
 // DEVELOPER NOTE: Since this is a "demo-only", experimental, etc. executable,
-//                 it may diverge from Bitcoin Core's coding style.
+//                 it may diverge from Sugarchain Core's coding style.
 //
-// It is part of the libbitcoinkernel project.
+// It is part of the libsugarchainkernel project.
 
 #include <kernel/chainparams.h>
 #include <kernel/checks.h>

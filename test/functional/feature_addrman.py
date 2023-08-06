@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021-2022 The Bitcoin Core developers
+# Copyright (c) 2021-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test addrman functionality"""
@@ -10,7 +10,7 @@ import struct
 
 from test_framework.messages import ser_uint256, hash256
 from test_framework.p2p import MAGIC_BYTES
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.test_node import ErrorMatch
 from test_framework.util import assert_equal
 
@@ -48,7 +48,7 @@ def write_addrman(peers_dat, **kwargs):
         f.write(serialize_addrman(**kwargs))
 
 
-class AddrmanTest(BitcoinTestFramework):
+class AddrmanTest(SugarchainTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
 
@@ -64,11 +64,15 @@ class AddrmanTest(BitcoinTestFramework):
         self.log.info("Check that mocked addrman is valid")
         self.stop_node(0)
         write_addrman(peers_dat)
-        with self.nodes[0].assert_debug_log(["Loaded 0 addresses from peers.dat"]):
+        with self.nodes[0].assert_debug_log(
+            ["Loaded 0 addresses from peers.dat"]
+        ):
             self.start_node(0, extra_args=["-checkaddrman=1"])
         assert_equal(self.nodes[0].getnodeaddresses(), [])
 
-        self.log.info("Check that addrman with negative lowest_compatible cannot be read")
+        self.log.info(
+            "Check that addrman with negative lowest_compatible cannot be read"
+        )
         self.stop_node(0)
         write_addrman(peers_dat, lowest_compatible=-32)
         self.nodes[0].assert_start_raises_init_error(
@@ -79,13 +83,17 @@ class AddrmanTest(BitcoinTestFramework):
             match=ErrorMatch.FULL_REGEX,
         )
 
-        self.log.info("Check that addrman from future is overwritten with new addrman")
+        self.log.info(
+            "Check that addrman from future is overwritten with new addrman"
+        )
         self.stop_node(0)
         write_addrman(peers_dat, lowest_compatible=111)
         assert_equal(os.path.exists(peers_dat + ".bak"), False)
-        with self.nodes[0].assert_debug_log([
+        with self.nodes[0].assert_debug_log(
+            [
                 f'Creating new peers.dat because the file version was not compatible ("{peers_dat}"). Original backed up to peers.dat.bak',
-        ]):
+            ]
+        ):
             self.start_node(0)
         assert_equal(self.nodes[0].getnodeaddresses(), [])
         assert_equal(os.path.exists(peers_dat + ".bak"), True)
@@ -119,7 +127,9 @@ class AddrmanTest(BitcoinTestFramework):
         self.stop_node(0)
         write_addrman(peers_dat, len_tried=-1)
         self.nodes[0].assert_start_raises_init_error(
-            expected_msg=init_error("Corrupt AddrMan serialization: nTried=-1, should be in \\[0, 16384\\]:.*"),
+            expected_msg=init_error(
+                "Corrupt AddrMan serialization: nTried=-1, should be in \\[0, 16384\\]:.*"
+            ),
             match=ErrorMatch.FULL_REGEX,
         )
 
@@ -127,24 +137,32 @@ class AddrmanTest(BitcoinTestFramework):
         self.stop_node(0)
         write_addrman(peers_dat, len_new=-1)
         self.nodes[0].assert_start_raises_init_error(
-            expected_msg=init_error("Corrupt AddrMan serialization: nNew=-1, should be in \\[0, 65536\\]:.*"),
+            expected_msg=init_error(
+                "Corrupt AddrMan serialization: nNew=-1, should be in \\[0, 65536\\]:.*"
+            ),
             match=ErrorMatch.FULL_REGEX,
         )
 
-        self.log.info("Check that corrupt addrman cannot be read (failed check)")
+        self.log.info(
+            "Check that corrupt addrman cannot be read (failed check)"
+        )
         self.stop_node(0)
         write_addrman(peers_dat, bucket_key=0)
         self.nodes[0].assert_start_raises_init_error(
-            expected_msg=init_error("Corrupt data. Consistency check failed with code -16: .*"),
+            expected_msg=init_error(
+                "Corrupt data. Consistency check failed with code -16: .*"
+            ),
             match=ErrorMatch.FULL_REGEX,
         )
 
         self.log.info("Check that missing addrman is recreated")
         self.stop_node(0)
         os.remove(peers_dat)
-        with self.nodes[0].assert_debug_log([
+        with self.nodes[0].assert_debug_log(
+            [
                 f'Creating peers.dat because the file was not found ("{peers_dat}")',
-        ]):
+            ]
+        ):
             self.start_node(0)
         assert_equal(self.nodes[0].getnodeaddresses(), [])
 

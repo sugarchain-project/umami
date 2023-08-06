@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2018-2022 The Bitcoin Core developers
+# Copyright (c) 2018-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test the behavior of RPC importprivkey on set and unset labels of
@@ -10,11 +10,11 @@ with or without a label and then its private key is imported with importprivkey
 with and without a label.
 """
 
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.wallet_util import test_address
 
 
-class ImportWithLabel(BitcoinTestFramework):
+class ImportWithLabel(SugarchainTestFramework):
     def add_options(self, parser):
         self.add_wallet_options(parser, descriptors=False)
 
@@ -35,11 +35,13 @@ class ImportWithLabel(BitcoinTestFramework):
         address = self.nodes[0].getnewaddress()
         label = "Test Label"
         self.nodes[1].importaddress(address, label)
-        test_address(self.nodes[1],
-                     address,
-                     iswatchonly=True,
-                     ismine=False,
-                     labels=[label])
+        test_address(
+            self.nodes[1],
+            address,
+            iswatchonly=True,
+            ismine=False,
+            labels=[label],
+        )
 
         self.log.info(
             "Import the watch-only address's private key without a "
@@ -55,11 +57,9 @@ class ImportWithLabel(BitcoinTestFramework):
         self.log.info("Import a watch-only address without a label.")
         address2 = self.nodes[0].getnewaddress()
         self.nodes[1].importaddress(address2)
-        test_address(self.nodes[1],
-                     address2,
-                     iswatchonly=True,
-                     ismine=False,
-                     labels=[""])
+        test_address(
+            self.nodes[1], address2, iswatchonly=True, ismine=False, labels=[""]
+        )
 
         self.log.info(
             "Import the watch-only address's private key with a "
@@ -71,16 +71,20 @@ class ImportWithLabel(BitcoinTestFramework):
 
         test_address(self.nodes[1], address2, labels=[label2])
 
-        self.log.info("Test importaddress with label and importprivkey with label.")
+        self.log.info(
+            "Test importaddress with label and importprivkey with label."
+        )
         self.log.info("Import a watch-only address with a label.")
         address3 = self.nodes[0].getnewaddress()
         label3_addr = "Test Label 3 for importaddress"
         self.nodes[1].importaddress(address3, label3_addr)
-        test_address(self.nodes[1],
-                     address3,
-                     iswatchonly=True,
-                     ismine=False,
-                     labels=[label3_addr])
+        test_address(
+            self.nodes[1],
+            address3,
+            iswatchonly=True,
+            ismine=False,
+            labels=[label3_addr],
+        )
 
         self.log.info(
             "Import the watch-only address's private key with a "
@@ -100,12 +104,14 @@ class ImportWithLabel(BitcoinTestFramework):
         address4 = self.nodes[0].getnewaddress("", "p2sh-segwit")
         label4_addr = "Test Label 4 for importaddress"
         self.nodes[1].importaddress(address4, label4_addr)
-        test_address(self.nodes[1],
-                     address4,
-                     iswatchonly=True,
-                     ismine=False,
-                     labels=[label4_addr],
-                     embedded=None)
+        test_address(
+            self.nodes[1],
+            address4,
+            iswatchonly=True,
+            ismine=False,
+            labels=[label4_addr],
+            embedded=None,
+        )
 
         self.log.info(
             "Import the watch-only address's private key without a "
@@ -115,7 +121,9 @@ class ImportWithLabel(BitcoinTestFramework):
         )
         priv_key4 = self.nodes[0].dumpprivkey(address4)
         self.nodes[1].importprivkey(priv_key4)
-        embedded_addr = self.nodes[1].getaddressinfo(address4)['embedded']['address']
+        embedded_addr = self.nodes[1].getaddressinfo(address4)["embedded"][
+            "address"
+        ]
 
         test_address(self.nodes[1], embedded_addr, labels=[""])
 

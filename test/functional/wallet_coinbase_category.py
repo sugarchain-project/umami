@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2014-2022 The Bitcoin Core developers
+# Copyright (c) 2014-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test coinbase transactions return the correct categories.
@@ -7,12 +7,11 @@
 Tests listtransactions, listsinceblock, and gettransaction.
 """
 
-from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import (
-    assert_array_result
-)
+from test_framework.test_framework import SugarchainTestFramework
+from test_framework.util import assert_array_result
 
-class CoinbaseCategoryTest(BitcoinTestFramework):
+
+class CoinbaseCategoryTest(SugarchainTestFramework):
     def add_options(self, parser):
         self.add_wallet_options(parser)
 
@@ -24,15 +23,21 @@ class CoinbaseCategoryTest(BitcoinTestFramework):
         self.skip_if_no_wallet()
 
     def assert_category(self, category, address, txid, skip):
-        assert_array_result(self.nodes[0].listtransactions(skip=skip),
-                            {"address": address},
-                            {"category": category})
-        assert_array_result(self.nodes[0].listsinceblock()["transactions"],
-                            {"address": address},
-                            {"category": category})
-        assert_array_result(self.nodes[0].gettransaction(txid)["details"],
-                            {"address": address},
-                            {"category": category})
+        assert_array_result(
+            self.nodes[0].listtransactions(skip=skip),
+            {"address": address},
+            {"category": category},
+        )
+        assert_array_result(
+            self.nodes[0].listsinceblock()["transactions"],
+            {"address": address},
+            {"category": category},
+        )
+        assert_array_result(
+            self.nodes[0].gettransaction(txid)["details"],
+            {"address": address},
+            {"category": category},
+        )
 
     def run_test(self):
         # Generate one block to an address
@@ -59,5 +64,6 @@ class CoinbaseCategoryTest(BitcoinTestFramework):
         # Coinbase transaction is now orphaned
         self.assert_category("orphan", address, txid, 100)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     CoinbaseCategoryTest().main()

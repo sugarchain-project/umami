@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021 The Bitcoin Core developers
+# Copyright (c) 2021 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test compact blocks HB selection logic."""
 
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import assert_equal
 
 
-class CompactBlocksConnectionTest(BitcoinTestFramework):
+class CompactBlocksConnectionTest(SugarchainTestFramework):
     """Test class for verifying selection of HB peer connections."""
 
     def set_test_params(self):
@@ -18,7 +18,7 @@ class CompactBlocksConnectionTest(BitcoinTestFramework):
     def peer_info(self, from_node, to_node):
         """Query from_node for its getpeerinfo about to_node."""
         for peerinfo in self.nodes[from_node].getpeerinfo():
-            if "(testnode%i)" % to_node in peerinfo['subver']:
+            if "(testnode%i)" % to_node in peerinfo["subver"]:
                 return peerinfo
         return None
 
@@ -32,13 +32,17 @@ class CompactBlocksConnectionTest(BitcoinTestFramework):
         self.connect_nodes(peer, 0)
         self.generate(self.nodes[0], 1)
         self.disconnect_nodes(peer, 0)
-        status_to = [self.peer_info(1, i)['bip152_hb_to'] for i in range(2, 6)]
-        status_from = [self.peer_info(i, 1)['bip152_hb_from'] for i in range(2, 6)]
+        status_to = [self.peer_info(1, i)["bip152_hb_to"] for i in range(2, 6)]
+        status_from = [
+            self.peer_info(i, 1)["bip152_hb_from"] for i in range(2, 6)
+        ]
         assert_equal(status_to, status_from)
         return status_to
 
     def run_test(self):
-        self.log.info("Testing reserved high-bandwidth mode slot for outbound peer...")
+        self.log.info(
+            "Testing reserved high-bandwidth mode slot for outbound peer..."
+        )
 
         # Connect everyone to node 0, and mine some blocks to get all nodes out of IBD.
         for i in range(1, 6):
@@ -91,5 +95,5 @@ class CompactBlocksConnectionTest(BitcoinTestFramework):
         assert_equal(status, [False, True, True, True])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     CompactBlocksConnectionTest().main()

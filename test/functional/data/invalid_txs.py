@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2022 The Bitcoin Core developers
+# Copyright (c) 2015-2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """
@@ -57,13 +57,16 @@ from test_framework.script_util import (
     MIN_STANDARD_TX_NONWITNESS_SIZE,
     script_to_p2sh_script,
 )
+
 basic_p2sh = script_to_p2sh_script(CScript([OP_0]))
+
 
 class BadTxTemplate:
     """Allows simple construction of a certain kind of invalid tx. Base class to be subclassed."""
+
     __metaclass__ = abc.ABCMeta
 
-    # The expected error code given by bitcoind upon submission of the tx.
+    # The expected error code given by sugarchaind upon submission of the tx.
     reject_reason: Optional[str] = ""
 
     # Only specified if it differs from mempool acceptance error.
@@ -79,7 +82,9 @@ class BadTxTemplate:
     def __init__(self, *, spend_tx=None, spend_block=None):
         self.spend_tx = spend_block.vtx[0] if spend_block else spend_tx
         self.spend_avail = sum(o.nValue for o in self.spend_tx.vout)
-        self.valid_txin = CTxIn(COutPoint(self.spend_tx.sha256, 0), b"", SEQUENCE_FINAL)
+        self.valid_txin = CTxIn(
+            COutPoint(self.spend_tx.sha256, 0), b"", SEQUENCE_FINAL
+        )
 
     @abc.abstractmethod
     def get_tx(self, *args, **kwargs):
@@ -123,7 +128,9 @@ class SizeTooSmall(BadTxTemplate):
     def get_tx(self):
         tx = CTransaction()
         tx.vin.append(self.valid_txin)
-        tx.vout.append(CTxOut(0, CScript([OP_RETURN] + ([OP_0] * (MIN_PADDING - 2)))))
+        tx.vout.append(
+            CTxOut(0, CScript([OP_RETURN] + ([OP_0] * (MIN_PADDING - 2))))
+        )
         assert len(tx.serialize_without_witness()) == 64
         assert MIN_STANDARD_TX_NONWITNESS_SIZE - 1 == 64
         tx.calc_sha256()
@@ -141,14 +148,16 @@ class BadInputOutpointIndex(BadTxTemplate):
         bad_idx = num_indices + 100
 
         tx = CTransaction()
-        tx.vin.append(CTxIn(COutPoint(self.spend_tx.sha256, bad_idx), b"", SEQUENCE_FINAL))
+        tx.vin.append(
+            CTxIn(COutPoint(self.spend_tx.sha256, bad_idx), b"", SEQUENCE_FINAL)
+        )
         tx.vout.append(CTxOut(0, basic_p2sh))
         tx.calc_sha256()
         return tx
 
 
 class DuplicateInput(BadTxTemplate):
-    reject_reason = 'bad-txns-inputs-duplicate'
+    reject_reason = "bad-txns-inputs-duplicate"
     expect_disconnect = True
 
     def get_tx(self):
@@ -161,13 +170,13 @@ class DuplicateInput(BadTxTemplate):
 
 
 class PrevoutNullInput(BadTxTemplate):
-    reject_reason = 'bad-txns-prevout-null'
+    reject_reason = "bad-txns-prevout-null"
     expect_disconnect = True
 
     def get_tx(self):
         tx = CTransaction()
         tx.vin.append(self.valid_txin)
-        tx.vin.append(CTxIn(COutPoint(hash=0, n=0xffffffff)))
+        tx.vin.append(CTxIn(COutPoint(hash=0, n=0xFFFFFFFF)))
         tx.vout.append(CTxOut(1, basic_p2sh))
         tx.calc_sha256()
         return tx
@@ -179,7 +188,9 @@ class NonexistentInput(BadTxTemplate):
 
     def get_tx(self):
         tx = CTransaction()
-        tx.vin.append(CTxIn(COutPoint(self.spend_tx.sha256 + 1, 0), b"", SEQUENCE_FINAL))
+        tx.vin.append(
+            CTxIn(COutPoint(self.spend_tx.sha256 + 1, 0), b"", SEQUENCE_FINAL)
+        )
         tx.vin.append(self.valid_txin)
         tx.vout.append(CTxOut(1, basic_p2sh))
         tx.calc_sha256()
@@ -187,16 +198,20 @@ class NonexistentInput(BadTxTemplate):
 
 
 class SpendTooMuch(BadTxTemplate):
-    reject_reason = 'bad-txns-in-belowout'
+    reject_reason = "bad-txns-in-belowout"
     expect_disconnect = True
 
     def get_tx(self):
         return create_tx_with_script(
-            self.spend_tx, 0, script_pub_key=basic_p2sh, amount=(self.spend_avail + 1))
+            self.spend_tx,
+            0,
+            script_pub_key=basic_p2sh,
+            amount=(self.spend_avail + 1),
+        )
 
 
 class CreateNegative(BadTxTemplate):
-    reject_reason = 'bad-txns-vout-negative'
+    reject_reason = "bad-txns-vout-negative"
     expect_disconnect = True
 
     def get_tx(self):
@@ -204,7 +219,7 @@ class CreateNegative(BadTxTemplate):
 
 
 class CreateTooLarge(BadTxTemplate):
-    reject_reason = 'bad-txns-vout-toolarge'
+    reject_reason = "bad-txns-vout-toolarge"
     expect_disconnect = True
 
     def get_tx(self):
@@ -212,7 +227,7 @@ class CreateTooLarge(BadTxTemplate):
 
 
 class CreateSumTooLarge(BadTxTemplate):
-    reject_reason = 'bad-txns-txouttotal-toolarge'
+    reject_reason = "bad-txns-txouttotal-toolarge"
     expect_disconnect = True
 
     def get_tx(self):
@@ -223,14 +238,19 @@ class CreateSumTooLarge(BadTxTemplate):
 
 
 class InvalidOPIFConstruction(BadTxTemplate):
-    reject_reason = "mandatory-script-verify-flag-failed (Invalid OP_IF construction)"
+    reject_reason = (
+        "mandatory-script-verify-flag-failed (Invalid OP_IF construction)"
+    )
     expect_disconnect = True
     valid_in_block = True
 
     def get_tx(self):
         return create_tx_with_script(
-            self.spend_tx, 0, script_sig=b'\x64' * 35,
-            amount=(self.spend_avail // 2))
+            self.spend_tx,
+            0,
+            script_sig=b"\x64" * 35,
+            amount=(self.spend_avail // 2),
+        )
 
 
 class TooManySigops(BadTxTemplate):
@@ -241,12 +261,13 @@ class TooManySigops(BadTxTemplate):
     def get_tx(self):
         lotsa_checksigs = CScript([OP_CHECKSIG] * (MAX_BLOCK_SIGOPS))
         return create_tx_with_script(
-            self.spend_tx, 0,
-            script_pub_key=lotsa_checksigs,
-            amount=1)
+            self.spend_tx, 0, script_pub_key=lotsa_checksigs, amount=1
+        )
+
 
 def getDisabledOpcodeTemplate(opcode):
-    """ Creates disabled opcode tx template class"""
+    """Creates disabled opcode tx template class"""
+
     def get_tx(self):
         tx = CTransaction()
         vin = self.valid_txin
@@ -256,30 +277,39 @@ def getDisabledOpcodeTemplate(opcode):
         tx.calc_sha256()
         return tx
 
-    return type('DisabledOpcode_' + str(opcode), (BadTxTemplate,), {
-        'reject_reason': "disabled opcode",
-        'expect_disconnect': True,
-        'get_tx': get_tx,
-        'valid_in_block' : True
-        })
+    return type(
+        "DisabledOpcode_" + str(opcode),
+        (BadTxTemplate,),
+        {
+            "reject_reason": "disabled opcode",
+            "expect_disconnect": True,
+            "get_tx": get_tx,
+            "valid_in_block": True,
+        },
+    )
+
 
 # Disabled opcode tx templates (CVE-2010-5137)
-DisabledOpcodeTemplates = [getDisabledOpcodeTemplate(opcode) for opcode in [
-    OP_CAT,
-    OP_SUBSTR,
-    OP_LEFT,
-    OP_RIGHT,
-    OP_INVERT,
-    OP_AND,
-    OP_OR,
-    OP_XOR,
-    OP_2MUL,
-    OP_2DIV,
-    OP_MUL,
-    OP_DIV,
-    OP_MOD,
-    OP_LSHIFT,
-    OP_RSHIFT]]
+DisabledOpcodeTemplates = [
+    getDisabledOpcodeTemplate(opcode)
+    for opcode in [
+        OP_CAT,
+        OP_SUBSTR,
+        OP_LEFT,
+        OP_RIGHT,
+        OP_INVERT,
+        OP_AND,
+        OP_OR,
+        OP_XOR,
+        OP_2MUL,
+        OP_2DIV,
+        OP_MUL,
+        OP_DIV,
+        OP_MOD,
+        OP_LSHIFT,
+        OP_RSHIFT,
+    ]
+]
 
 
 def iter_all_templates():

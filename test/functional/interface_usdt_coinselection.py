@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022 The Bitcoin Core developers
+# Copyright (c) 2022 The Sugarchain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 """  Tests the coin_selection:* tracepoint API interface.
-     See https://github.com/bitcoin/bitcoin/blob/master/doc/tracing.md#context-coin_selection
+     See https://github.com/sugarchain/sugarchain/blob/master/doc/tracing.md#context-coin_selection
 """
 
 # Test will be skipped if we don't have bcc installed
 try:
-    from bcc import BPF, USDT # type: ignore[import]
+    from bcc import BPF, USDT  # type: ignore[import]
 except ImportError:
     pass
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import SugarchainTestFramework
 from test_framework.util import (
     assert_equal,
     assert_greater_than,
@@ -96,7 +96,7 @@ int trace_aps_create_tx(struct pt_regs *ctx) {
 """
 
 
-class CoinSelectionTracepointTest(BitcoinTestFramework):
+class CoinSelectionTracepointTest(SugarchainTestFramework):
     def add_options(self, parser):
         self.add_wallet_options(parser)
 
@@ -106,7 +106,7 @@ class CoinSelectionTracepointTest(BitcoinTestFramework):
 
     def skip_test_if_missing_module(self):
         self.skip_if_platform_not_linux()
-        self.skip_if_no_bitcoind_tracepoints()
+        self.skip_if_no_sugarchaind_tracepoints()
         self.skip_if_no_python_bcc()
         self.skip_if_no_bpf_permissions()
         self.skip_if_no_wallet()
@@ -116,7 +116,9 @@ class CoinSelectionTracepointTest(BitcoinTestFramework):
         try:
             for i in range(0, len(expected_types) + 1):
                 event = self.bpf["coin_selection_events"].pop()
-                assert_equal(event.wallet_name.decode(), self.default_wallet_name)
+                assert_equal(
+                    event.wallet_name.decode(), self.default_wallet_name
+                )
                 assert_equal(event.type, expected_types[i])
                 events.append(event)
             else:
@@ -126,7 +128,6 @@ class CoinSelectionTracepointTest(BitcoinTestFramework):
         except KeyError:
             assert_equal(len(events), len(expected_types))
             return events
-
 
     def determine_selection_from_usdt(self, events):
         success = None
@@ -162,11 +163,25 @@ class CoinSelectionTracepointTest(BitcoinTestFramework):
     def run_test(self):
         self.log.info("hook into the coin_selection tracepoints")
         ctx = USDT(pid=self.nodes[0].process.pid)
-        ctx.enable_probe(probe="coin_selection:selected_coins", fn_name="trace_selected_coins")
-        ctx.enable_probe(probe="coin_selection:normal_create_tx_internal", fn_name="trace_normal_create_tx")
-        ctx.enable_probe(probe="coin_selection:attempting_aps_create_tx", fn_name="trace_attempt_aps")
-        ctx.enable_probe(probe="coin_selection:aps_create_tx_internal", fn_name="trace_aps_create_tx")
-        self.bpf = BPF(text=coinselection_tracepoints_program, usdt_contexts=[ctx], debug=0)
+        ctx.enable_probe(
+            probe="coin_selection:selected_coins",
+            fn_name="trace_selected_coins",
+        )
+        ctx.enable_probe(
+            probe="coin_selection:normal_create_tx_internal",
+            fn_name="trace_normal_create_tx",
+        )
+        ctx.enable_probe(
+            probe="coin_selection:attempting_aps_create_tx",
+            fn_name="trace_attempt_aps",
+        )
+        ctx.enable_probe(
+            probe="coin_selection:aps_create_tx_internal",
+            fn_name="trace_aps_create_tx",
+        )
+        self.bpf = BPF(
+            text=coinselection_tracepoints_program, usdt_contexts=[ctx], debug=0
+        )
 
         self.log.info("Prepare wallets")
         self.generate(self.nodes[0], 101)
@@ -181,16 +196,34 @@ class CoinSelectionTracepointTest(BitcoinTestFramework):
         # 5. aps_create_tx_internal (type 4)
         wallet.sendtoaddress(wallet.getnewaddress(), 10)
         events = self.get_tracepoints([1, 2, 3, 1, 4])
-        success, use_aps, algo, waste, change_pos = self.determine_selection_from_usdt(events)
+        (
+            success,
+            use_aps,
+            algo,
+            waste,
+            change_pos,
+        ) = self.determine_selection_from_usdt(events)
         assert_equal(success, True)
         assert_greater_than(change_pos, -1)
 
         self.log.info("Failing to fund results in 1 tracepoint")
         # We should have 1 tracepoints in the order
         # 1. normal_create_tx_internal (type 2)
-        assert_raises_rpc_error(-6, "Insufficient funds", wallet.sendtoaddress, wallet.getnewaddress(), 102 * 50)
+        assert_raises_rpc_error(
+            -6,
+            "Insufficient funds",
+            wallet.sendtoaddress,
+            wallet.getnewaddress(),
+            102 * 50,
+        )
         events = self.get_tracepoints([2])
-        success, use_aps, algo, waste, change_pos = self.determine_selection_from_usdt(events)
+        (
+            success,
+            use_aps,
+            algo,
+            waste,
+            change_pos,
+        ) = self.determine_selection_from_usdt(events)
         assert_equal(success, False)
 
         self.log.info("Explicitly enabling APS results in 2 tracepoints")
@@ -198,14 +231,22 @@ class CoinSelectionTracepointTest(BitcoinTestFramework):
         # 1. selected_coins (type 1)
         # 2. normal_create_tx_internal (type 2)
         wallet.setwalletflag("avoid_reuse")
-        wallet.sendtoaddress(address=wallet.getnewaddress(), amount=10, avoid_reuse=True)
+        wallet.sendtoaddress(
+            address=wallet.getnewaddress(), amount=10, avoid_reuse=True
+        )
         events = self.get_tracepoints([1, 2])
-        success, use_aps, algo, waste, change_pos = self.determine_selection_from_usdt(events)
+        (
+            success,
+            use_aps,
+            algo,
+            waste,
+            change_pos,
+        ) = self.determine_selection_from_usdt(events)
         assert_equal(success, True)
         assert_equal(use_aps, None)
 
         self.bpf.cleanup()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     CoinSelectionTracepointTest().main()
