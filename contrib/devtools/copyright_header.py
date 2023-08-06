@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2016-2022 The Sugarchain Core developers
+# Copyright (c) 2016-2022 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -120,7 +120,7 @@ def compile_copyright_regex(copyright_style, year_style, name):
 
 EXPECTED_HOLDER_NAMES = [
     r"Satoshi Nakamoto",
-    r"The Sugarchain Core developers",
+    r"The Bitcoin Core developers",
     r"BitPay Inc\.",
     r"University of Illinois at Urbana-Champaign\.",
     r"Pieter Wuille",
@@ -420,7 +420,7 @@ def write_file_lines(filename, file_lines):
 COPYRIGHT = r"Copyright \(c\)"
 YEAR = "20[0-9][0-9]"
 YEAR_RANGE = "(%s)(-%s)?" % (YEAR, YEAR)
-HOLDER = "The Sugarchain Core developers"
+HOLDER = "The Bitcoin Core developers"
 UPDATEABLE_LINE_COMPILED = re.compile(" ".join([COPYRIGHT, YEAR_RANGE, HOLDER]))
 
 
@@ -497,24 +497,24 @@ def exec_update_header_year(base_directory):
 ################################################################################
 
 UPDATE_USAGE = """
-Updates all the copyright headers of "The Sugarchain Core developers" which were
+Updates all the copyright headers of "The Bitcoin Core developers" which were
 changed in a year more recent than is listed. For example:
 
-// Copyright (c) <firstYear>-<lastYear> The Sugarchain Core developers
+// Copyright (c) <firstYear>-<lastYear> The Bitcoin Core developers
 
 will be updated to:
 
-// Copyright (c) <firstYear>-<lastModifiedYear> The Sugarchain Core developers
+// Copyright (c) <firstYear>-<lastModifiedYear> The Bitcoin Core developers
 
 where <lastModifiedYear> is obtained from the 'git log' history.
 
 This subcommand also handles copyright headers that have only a single year. In those cases:
 
-// Copyright (c) <year> The Sugarchain Core developers
+// Copyright (c) <year> The Bitcoin Core developers
 
 will be updated to:
 
-// Copyright (c) <year>-<lastModifiedYear> The Sugarchain Core developers
+// Copyright (c) <year>-<lastModifiedYear> The Bitcoin Core developers
 
 where the update is appropriate.
 
@@ -552,7 +552,7 @@ def get_header_lines(header, start_year, end_year):
 
 
 CPP_HEADER = """
-// Copyright (c) %s The Sugarchain Core developers
+// Copyright (c) %s The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """
@@ -563,7 +563,7 @@ def get_cpp_header_lines_to_insert(start_year, end_year):
 
 
 SCRIPT_HEADER = """
-# Copyright (c) %s The Sugarchain Core developers
+# Copyright (c) %s The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """
@@ -629,7 +629,7 @@ def exec_insert_header(filename, style):
     file_lines = read_file_lines(filename)
     if file_already_has_core_copyright(file_lines):
         sys.exit(
-            "*** %s already has a copyright by The Sugarchain Core developers"
+            "*** %s already has a copyright by The Bitcoin Core developers"
             % (filename)
         )
     start_year, end_year = get_git_change_year_range(filename)
@@ -644,7 +644,7 @@ def exec_insert_header(filename, style):
 ################################################################################
 
 INSERT_USAGE = """
-Inserts a copyright header for "The Sugarchain Core developers" at the top of the
+Inserts a copyright header for "The Bitcoin Core developers" at the top of the
 file in either Python or C++ style as determined by the file extension. If the
 file is a Python file and it has a '#!' starting the first line, the header is
 inserted in the line below it.
@@ -658,7 +658,7 @@ where <year_introduced> is according to the 'git log' history. If
 
 "<current_year>"
 
-If the file already has a copyright for "The Sugarchain Core developers", the
+If the file already has a copyright for "The Bitcoin Core developers", the
 script will exit.
 
 Usage:

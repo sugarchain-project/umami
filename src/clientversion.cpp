@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 The Sugarchain Core developers
+// Copyright (c) 2012-2022 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -84,7 +84,7 @@ std::string CopyrightHolders(const std::string& strPrefix)
 
     // Make sure Sugarchain Core copyright is not removed by accident
     if (copyright_devs.find("Sugarchain Core") == std::string::npos) {
-        strCopyrightHolders += "\n" + strPrefix + "The Sugarchain Core developers";
+        strCopyrightHolders += "\n" + strPrefix + "The Bitcoin Core developers";
     }
     return strCopyrightHolders;
 }
