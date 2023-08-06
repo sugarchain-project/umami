@@ -4,7 +4,7 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 """ Tests the utxocache:* tracepoint API interface.
-    See https://github.com/sugarchain/sugarchain/blob/master/doc/tracing.md#context-utxocache
+    See https://github.com/bitcoin/bitcoin/blob/master/doc/tracing.md#context-utxocache
 """
 
 import ctypes
@@ -152,7 +152,7 @@ class UTXOCacheTracepointTest(SugarchainTestFramework):
 
     def test_uncache(self):
         """Tests the utxocache:uncache tracepoint API.
-        https://github.com/sugarchain/sugarchain/blob/master/doc/tracing.md#tracepoint-utxocacheuncache
+        https://github.com/bitcoin/bitcoin/blob/master/doc/tracing.md#tracepoint-utxocacheuncache
         """
         # To trigger an UTXO uncache from the cache, we create an invalid transaction
         # spending a not-cached, but existing UTXO. During transaction validation, this
@@ -218,8 +218,8 @@ class UTXOCacheTracepointTest(SugarchainTestFramework):
 
     def test_add_spent(self):
         """Tests the utxocache:add utxocache:spent tracepoint API
-        See https://github.com/sugarchain/sugarchain/blob/master/doc/tracing.md#tracepoint-utxocacheadd
-        and https://github.com/sugarchain/sugarchain/blob/master/doc/tracing.md#tracepoint-utxocachespent
+        See https://github.com/bitcoin/bitcoin/blob/master/doc/tracing.md#tracepoint-utxocacheadd
+        and https://github.com/bitcoin/bitcoin/blob/master/doc/tracing.md#tracepoint-utxocachespent
         """
 
         self.log.info(
@@ -347,7 +347,7 @@ class UTXOCacheTracepointTest(SugarchainTestFramework):
 
     def test_flush(self):
         """Tests the utxocache:flush tracepoint API.
-        See https://github.com/sugarchain/sugarchain/blob/master/doc/tracing.md#tracepoint-utxocacheflush
+        See https://github.com/bitcoin/bitcoin/blob/master/doc/tracing.md#tracepoint-utxocacheflush
         """
 
         self.log.info("test the utxocache:flush tracepoint API")

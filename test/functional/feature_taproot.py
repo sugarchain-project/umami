@@ -2684,7 +2684,7 @@ def spenders_taproot_active():
             failure={"leaf": "normal"},
         )  # err_msg differs based on opcode
 
-    # == Test case for https://github.com/sugarchain/sugarchain/issues/24765 ==
+    # == Test case for https://github.com/bitcoin/bitcoin/issues/24765 ==
 
     zero_fn = lambda h: bytes([0 for _ in range(32)])
     tap = taproot_construct(

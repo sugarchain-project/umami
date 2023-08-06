@@ -2,7 +2,7 @@ Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Sugarchain
 Upstream-Contact: Satoshi Nakamoto <satoshin@gmx.com>
  irc://#sugarchain-core-dev@libera.chat
-Source: https://github.com/sugarchain/sugarchain
+Source: https://github.com/bitcoin/bitcoin
 
 Files: *
 Copyright: 2009-2023, Sugarchain Core Developers

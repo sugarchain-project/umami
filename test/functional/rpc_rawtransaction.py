@@ -839,7 +839,7 @@ class RawTransactionsTest(SugarchainTestFramework):
             encrawtx, False
         )  # decode as non-witness transaction
         assert_equal(decrawtx["vout"][0]["value"], Decimal("1.00000000"))
-        # known ambiguous transaction in the chain (see https://github.com/sugarchain/sugarchain/issues/20579)
+        # known ambiguous transaction in the chain (see https://github.com/bitcoin/bitcoin/issues/20579)
         coinbase = "03c68708046ff8415c622f4254432e434f4d2ffabe6d6de1965d02c68f928e5b244ab1965115a36f56eb997633c7f690124bbf43644e23080000000ca3d3af6d005a65ff0200fd00000000"
         encrawtx = (
             f"020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff4b{coinbase}"

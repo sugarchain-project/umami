@@ -302,7 +302,7 @@ class WalletDumpTest(SugarchainTestFramework):
             self.nodes[0].getnewaddress()
 
         # Make sure that dumpwallet doesn't have a lock order issue when there is an unconfirmed tx and it is reloaded
-        # See https://github.com/sugarchain/sugarchain/issues/22489
+        # See https://github.com/bitcoin/bitcoin/issues/22489
         self.nodes[0].createwallet("w3")
         w3 = self.nodes[0].get_wallet_rpc("w3")
         w3.importprivkey(

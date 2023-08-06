@@ -348,7 +348,7 @@ class BackwardsCompatibilityTest(SugarchainTestFramework):
                 os.path.join(node_master_wallets_dir, "u1_v16"),
             )
             load_res = node_master.loadwallet("u1_v16")
-            # Make sure this wallet opens without warnings. See https://github.com/sugarchain/sugarchain/pull/19054
+            # Make sure this wallet opens without warnings. See https://github.com/bitcoin/bitcoin/pull/19054
             if int(node_master.getnetworkinfo()["version"]) >= 249900:
                 # loadwallet#warnings (added in v25) -- only present if there is a warning
                 assert "warnings" not in load_res

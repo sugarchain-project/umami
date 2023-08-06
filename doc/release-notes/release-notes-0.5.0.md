@@ -7,7 +7,7 @@ This release include German, Spanish, Spanish-Castilian, Norwegian and Dutch tra
 https://www.transifex.net/projects/p/sugarchain/
 
 Please report bugs using the issue tracker at github:
-https://github.com/sugarchain/sugarchain/issues
+https://github.com/bitcoin/bitcoin/issues
 
 For Ubuntu users, there is a new ppa maintained by Matt Corallo which you can add to your system so that it will automatically keep sugarchain up-to-date.  Just type "sudo apt-add-repository ppa:sugarchain/sugarchain" in your terminal, then install the sugarchain-qt package.
 

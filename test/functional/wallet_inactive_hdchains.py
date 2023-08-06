@@ -119,7 +119,7 @@ class InactiveHDChainsTest(SugarchainTestFramework):
     def test_without_upgraded_keymeta(self):
         # Test that it is possible to top up inactive hd chains even if there is no key origin
         # in CKeyMetadata. This tests for the segfault reported in
-        # https://github.com/sugarchain/sugarchain/issues/21605
+        # https://github.com/bitcoin/bitcoin/issues/21605
         self.log.info(
             "Test that topping up inactive HD chains does not need upgraded key origin"
         )

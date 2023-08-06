@@ -7,7 +7,7 @@ bug fixes.
 
 Please report bugs using the issue tracker at github:
 
-  https://github.com/sugarchain/sugarchain/issues
+  https://github.com/bitcoin/bitcoin/issues
 
 Upgrading and downgrading
 =========================
@@ -230,7 +230,7 @@ bindings such as [python-sugarchainlib](https://pypi.python.org/pypi/python-suga
 alternative node implementations.
 
 This library is called `libsugarchainconsensus.so` (or, `.dll` for Windows).
-Its interface is defined in the C header [sugarchainconsensus.h](https://github.com/sugarchain/sugarchain/blob/0.10/src/script/sugarchainconsensus.h).
+Its interface is defined in the C header [sugarchainconsensus.h](https://github.com/bitcoin/bitcoin/blob/0.10/src/script/sugarchainconsensus.h).
 
 In its initial version the API includes two functions:
 

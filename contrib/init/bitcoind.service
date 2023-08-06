@@ -11,7 +11,7 @@
 
 [Unit]
 Description=Sugarchain daemon
-Documentation=https://github.com/sugarchain/sugarchain/blob/master/doc/init.md
+Documentation=https://github.com/bitcoin/bitcoin/blob/master/doc/init.md
 
 # https://www.freedesktop.org/wiki/Software/systemd/NetworkTarget/
 After=network-online.target

@@ -10,7 +10,7 @@ improvements, as well as updated translations.
 
 Please report bugs using the issue tracker at GitHub:
 
-  <https://github.com/sugarchain/sugarchain/issues>
+  <https://github.com/bitcoin/bitcoin/issues>
 
 To receive security and update notifications, please subscribe to:
 
@@ -208,7 +208,7 @@ Binary verification
   In this release and moving forward it will verify that the binaries are
   signed by a _threshold of trusted keys_. For more details and
   examples, see:
-  https://github.com/sugarchain/sugarchain/blob/master/contrib/verify-binaries/README.md
+  https://github.com/bitcoin/bitcoin/blob/master/contrib/verify-binaries/README.md
   (#27358)
 
 Low-level changes

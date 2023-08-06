@@ -13,7 +13,7 @@ hostile hosts.
 
 Please report bugs using the issue tracker at github:
 
-  https://github.com/sugarchain/sugarchain/issues
+  https://github.com/bitcoin/bitcoin/issues
 
 How to Upgrade
 --------------

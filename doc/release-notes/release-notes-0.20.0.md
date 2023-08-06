@@ -10,7 +10,7 @@ improvements, as well as updated translations.
 
 Please report bugs using the issue tracker at GitHub:
 
-  <https://github.com/sugarchain/sugarchain/issues>
+  <https://github.com/bitcoin/bitcoin/issues>
 
 To receive security and update notifications, please subscribe to:
 
@@ -163,8 +163,8 @@ New settings
 - A new `-asmap` configuration option has been added to diversify the
   node's network connections by mapping IP addresses Autonomous System
   Numbers (ASNs) and then limiting the number of connections made to any
-  single ASN.  See [issue #16599](https://github.com/sugarchain/sugarchain/issues/16599),
-  [PR #16702](https://github.com/sugarchain/sugarchain/pull/16702), and the
+  single ASN.  See [issue #16599](https://github.com/bitcoin/bitcoin/issues/16599),
+  [PR #16702](https://github.com/bitcoin/bitcoin/pull/16702), and the
   `sugarchaind help` for more information.  This option is experimental and
   subject to removal or breaking changes in future releases, so the
   legacy /16 prefix mapping of IP addresses remains the default.  (#16702)
