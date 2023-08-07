@@ -557,7 +557,10 @@ crypto_libsugarchain_crypto_base_la_SOURCES = \
   crypto/sha512.cpp \
   crypto/sha512.h \
   crypto/siphash.cpp \
-  crypto/siphash.h
+  crypto/siphash.h \
+  crypto/yespower-1.0.1/sha256.c \
+  crypto/yespower-1.0.1/yespower.h \
+  crypto/yespower-1.0.1/yespower-opt.c
 
 if USE_ASM
 crypto_libsugarchain_crypto_base_la_SOURCES += crypto/sha256_sse4.cpp

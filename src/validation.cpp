@@ -3480,7 +3480,7 @@ void Chainstate::ReceivedBlockTransactions(const CBlock& block, CBlockIndex* pin
 static bool CheckBlockHeader(const CBlockHeader& block, BlockValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW = true)
 {
     // Check proof of work matches claimed amount
-    if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits, consensusParams))
+    if (fCheckPOW && !CheckProofOfWork(block.GetPoWHash_cached(), block.nBits, consensusParams))
         return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "high-hash", "proof of work failed");
 
     return true;
@@ -3602,7 +3602,7 @@ std::vector<unsigned char> ChainstateManager::GenerateCoinbaseCommitment(CBlock&
 bool HasValidProofOfWork(const std::vector<CBlockHeader>& headers, const Consensus::Params& consensusParams)
 {
     return std::all_of(headers.cbegin(), headers.cend(),
-            [&](const auto& header) { return CheckProofOfWork(header.GetHash(), header.nBits, consensusParams);});
+            [&](const auto& header) { return CheckProofOfWork(header.GetPoWHash_cached(), header.nBits, consensusParams);});
 }
 
 arith_uint256 CalculateHeadersWork(const std::vector<CBlockHeader>& headers)
@@ -3869,6 +3869,30 @@ bool ChainstateManager::AcceptBlockHeader(const CBlockHeader& block, BlockValida
 bool ChainstateManager::ProcessNewBlockHeaders(const std::vector<CBlockHeader>& headers, bool min_pow_checked, BlockValidationState& state, const CBlockIndex** ppindex)
 {
     AssertLockNotHeld(cs_main);
+
+    /* YespowerSugar */
+    // Look for this block's header in the index like AcceptBlock() will
+    {
+        LOCK(cs_main);
+
+        for (const CBlockHeader& header : headers) {
+            uint256 hash = header.GetHash();
+            // BlockMap::iterator miSelf = m_blockman.m_block_index.find(hash); // Use "m_blockman.m_block_index" rather than "mapBlockIndex"
+            BlockMap::iterator miSelf{m_blockman.m_block_index.find(hash)};
+            CBlockIndex *pindex = nullptr;
+            if (miSelf != m_blockman.m_block_index.end()) {
+                // Block header is already known
+                CBlockIndex* pindex = &(miSelf->second);
+                if (!header.cache_init && pindex->cache_init) {
+                    LOCK(header.cache_lock); // Probably unnecessary since no concurrent access to pblock is expected
+                    header.cache_init = true;
+                    header.cache_block_hash = pindex->cache_block_hash;
+                    header.cache_PoW_hash = pindex->cache_PoW_hash;
+                }
+            }
+        }
+    }
+
     {
         LOCK(cs_main);
         for (const CBlockHeader& header : headers) {

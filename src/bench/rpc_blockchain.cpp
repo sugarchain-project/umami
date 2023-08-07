@@ -22,7 +22,7 @@ struct TestBlockAndIndex {
 
     TestBlockAndIndex()
     {
-        CDataStream stream(benchmark::data::block413567, SER_NETWORK, PROTOCOL_VERSION);
+        CDataStream stream(benchmark::data::block6513497, SER_NETWORK, PROTOCOL_VERSION);
         std::byte a{0};
         stream.write({&a, 1}); // Prevent compaction
 
@@ -30,7 +30,7 @@ struct TestBlockAndIndex {
 
         blockHash = block.GetHash();
         blockindex.phashBlock = &blockHash;
-        blockindex.nBits = 403014710;
+        blockindex.nBits = 503362144; // Sugarchain: Introduce YespowerSugar // block6513497 // >>> print int("0x1e00b260", 0)
     }
 };
 
