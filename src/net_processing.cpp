@@ -71,11 +71,11 @@ static constexpr int32_t MAX_OUTBOUND_PEERS_TO_PROTECT_FROM_DISCONNECT = 4;
 /** Timeout for (unprotected) outbound peers to sync to our chainwork */
 static constexpr auto CHAIN_SYNC_TIMEOUT{20min};
 /** How frequently to check for stale tips */
-static constexpr auto STALE_CHECK_INTERVAL{10min};
+static constexpr auto STALE_CHECK_INTERVAL{5s}; // was 10m
 /** How frequently to check for extra outbound peers and disconnect */
-static constexpr auto EXTRA_PEER_CHECK_INTERVAL{45s};
+static constexpr auto EXTRA_PEER_CHECK_INTERVAL{3s}; // was 45s
 /** Minimum time an outbound-peer-eviction candidate must be connected for, in order to evict */
-static constexpr auto MINIMUM_CONNECT_TIME{30s};
+static constexpr auto MINIMUM_CONNECT_TIME{15s}; // was 30s
 /** SHA256("main address relay")[0:8] */
 static constexpr uint64_t RANDOMIZER_ID_ADDRESS_RELAY = 0x3cac0035b5866b90ULL;
 /// Age after which a stale block will no longer be served if requested as

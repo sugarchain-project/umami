@@ -13,7 +13,8 @@
 #include <cstdint>
 #include <vector>
 
-static const int64_t DEFAULT_MAX_TIME_ADJUSTMENT = 70 * 60;
+// FTL: 70 seconds, 120x faster but 1/60 times // was (70 * 60)
+static const int64_t DEFAULT_MAX_TIME_ADJUSTMENT = 70;
 
 class CNetAddr;
 
