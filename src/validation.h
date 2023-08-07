@@ -61,6 +61,27 @@ namespace Consensus {
 struct Params;
 } // namespace Consensus
 
+// Sugar: Addressindex
+static const bool DEFAULT_ADDRESSINDEX{false};
+static const bool DEFAULT_TIMESTAMPINDEX{false};
+static const bool DEFAULT_SPENTINDEX{false};
+
+// Address index
+extern bool fAddressIndex;
+extern bool fTimestampIndex;
+extern bool fSpentIndex;
+
+enum AddressIndexType {
+    ADDR_INDT_UNKNOWN                = 0,
+    ADDR_INDT_PUBKEY_ADDRESS         = 1,
+    ADDR_INDT_SCRIPT_ADDRESS         = 2,
+    ADDR_INDT_WITNESS_V0_KEYHASH     = 5,
+    ADDR_INDT_WITNESS_V0_SCRIPTHASH  = 6,
+    ADDR_INDT_WITNESS_V1_TAPROOT     = 7
+};
+
+bool ExtractIndexInfo(const CScript *pScript, int &scriptType, std::vector<uint8_t> &hashBytes);
+
 /** Maximum number of dedicated script-checking threads allowed */
 static const int MAX_SCRIPTCHECK_THREADS = 15;
 /** -par default (number of script-checking threads, 0 = auto) */

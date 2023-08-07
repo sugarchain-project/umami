@@ -83,6 +83,11 @@ using node::SnapshotMetadata;
 using node::UndoReadFromDisk;
 using node::UnlinkPrunedFiles;
 
+// Sugar: Addressindex
+bool fAddressIndex = false;
+bool fTimestampIndex = false;
+bool fSpentIndex = false;
+
 /** Maximum kilobytes for transactions to store for processing during reorg */
 static const unsigned int MAX_DISCONNECTED_TX_POOL_SIZE = 20000;
 /** Time to wait between writing blocks/block index to disk. */
@@ -109,6 +114,34 @@ static constexpr int PRUNE_LOCK_BUFFER{10};
 GlobalMutex g_best_block_mutex;
 std::condition_variable g_best_block_cv;
 uint256 g_best_block;
+
+// Sugar: Addressindex
+bool ExtractIndexInfo(const CScript *pScript, int &scriptType, std::vector<uint8_t> &hashBytes)
+{
+    CScript tmpScript;
+
+    int witnessversion = 0;
+    std::vector<unsigned char> witnessprogram;
+    scriptType = ADDR_INDT_UNKNOWN;
+    if (pScript->IsPayToPublicKeyHash()) {
+        hashBytes.assign(pScript->begin() + 3, pScript->begin() + 23);
+        scriptType = ADDR_INDT_PUBKEY_ADDRESS;
+    } else if (pScript->IsPayToScriptHash()) {
+        hashBytes.assign(pScript->begin() + 2, pScript->begin() + 22);
+        scriptType = ADDR_INDT_SCRIPT_ADDRESS;
+    } else if (pScript->IsPayToWitnessScriptHash()) {
+        hashBytes.assign(pScript->begin() + 2, pScript->begin() + 34);
+        scriptType = ADDR_INDT_WITNESS_V0_SCRIPTHASH;
+    } else if (pScript->IsWitnessProgram(witnessversion, witnessprogram)) {
+        hashBytes.assign(witnessprogram.begin(), witnessprogram.begin() + witnessprogram.size());
+        switch (witnessversion) {
+            case 0: scriptType = ADDR_INDT_WITNESS_V0_KEYHASH; break;
+            case 1: scriptType = ADDR_INDT_WITNESS_V1_TAPROOT; break;
+        }
+    }
+
+    return true;
+};
 
 const CBlockIndex* Chainstate::FindForkInGlobalIndex(const CBlockLocator& locator) const
 {
@@ -1096,6 +1129,17 @@ bool MemPoolAccept::Finalize(const ATMPArgs& args, Workspace& ws)
     // transaction has not necessarily been accepted to miners' mempools.
     bool validForFeeEstimation = !bypass_limits && !args.m_package_submission && IsCurrentForFeeEstimation(m_active_chainstate) && m_pool.HasNoInputsOf(tx);
 
+    // Sugar: Addressindex
+    // Add memory address index
+    if (fAddressIndex) {
+        m_pool.addAddressIndex(*entry, m_view);
+    }
+
+    // Add memory spent index
+    if (fSpentIndex) {
+        m_pool.addSpentIndex(*entry, m_view);
+    }
+
     // Store transaction in memory
     m_pool.addUnchecked(*entry, ws.m_ancestors, validForFeeEstimation);
 
@@ -1925,7 +1969,12 @@ DisconnectResult Chainstate::DisconnectBlock(const CBlock& block, const CBlockIn
     bool fEnforceBIP30 = !((pindex->nHeight==91722 && pindex->GetBlockHash() == uint256S("0x00000000000271a2dc26e7667f8419f2e15416dc6955e5a6c6cdf3f2574dd08e")) ||
                            (pindex->nHeight==91812 && pindex->GetBlockHash() == uint256S("0x00000000000af0aed4792b1acee3d966af36cf5def14935db8de83d6f9306f2f")));
     */
-   bool fEnforceBIP30 = true;
+    bool fEnforceBIP30 = true;
+
+    // Sugar: Addressindex
+    std::vector<std::pair<CAddressIndexKey, CAmount> > addressIndex;
+    std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> > addressUnspentIndex;
+    std::vector<std::pair<CSpentIndexKey, CSpentIndexValue> > spentIndex;
 
     // undo transactions in reverse order
     for (int i = block.vtx.size() - 1; i >= 0; i--) {
@@ -1933,6 +1982,28 @@ DisconnectResult Chainstate::DisconnectBlock(const CBlock& block, const CBlockIn
         uint256 hash = tx.GetHash();
         bool is_coinbase = tx.IsCoinBase();
         bool is_bip30_exception = (is_coinbase && !fEnforceBIP30);
+
+        // Sugar: Addressindex
+        if (fAddressIndex) {
+
+            for (unsigned int k = tx.vout.size(); k-- > 0;) {
+                const CTxOut &out = tx.vout[k];
+
+                std::vector<unsigned char> hashBytes;
+                int scriptType = 0;
+
+                if (!ExtractIndexInfo(&out.scriptPubKey, scriptType, hashBytes)
+                    || scriptType == 0) {
+                    continue;
+                }
+
+                // undo receiving activity
+                addressIndex.push_back(std::make_pair(CAddressIndexKey(scriptType, uint256(hashBytes.data(), hashBytes.size()), pindex->nHeight, i, hash, k, false), out.nValue));
+
+                // undo unspent index
+                addressUnspentIndex.push_back(std::make_pair(CAddressUnspentKey(scriptType, uint256(hashBytes.data(), hashBytes.size()), hash, k), CAddressUnspentValue()));
+            }
+        }
 
         // Check that all outputs are available and match the outputs in the block itself
         // exactly.
@@ -1962,8 +2033,48 @@ DisconnectResult Chainstate::DisconnectBlock(const CBlock& block, const CBlockIn
                 int res = ApplyTxInUndo(std::move(txundo.vprevout[j]), view, out);
                 if (res == DISCONNECT_FAILED) return DISCONNECT_FAILED;
                 fClean = fClean && res != DISCONNECT_UNCLEAN;
+
+                // Sugar: Addressindex
+                int undoHeight = txundo.vprevout[j].nHeight;
+                const CTxIn input = tx.vin[j];
+
+                if (fSpentIndex) {
+                    // undo and delete the spent index
+                    spentIndex.push_back(std::make_pair(CSpentIndexKey(input.prevout.hash, input.prevout.n), CSpentIndexValue()));
+                }
+
+                if (fAddressIndex) {
+                    const Coin &coin = view.AccessCoin(tx.vin[j].prevout);
+                    const CTxOut &prevout = coin.out;
+
+                    std::vector<unsigned char> hashBytes;
+                    int scriptType = 0;
+
+                    if (!ExtractIndexInfo(&prevout.scriptPubKey, scriptType, hashBytes)
+                        || scriptType == 0) {
+                        continue;
+                    }
+
+                    // undo spending activity
+                    addressIndex.push_back(std::make_pair(CAddressIndexKey(scriptType, uint256(hashBytes.data(), hashBytes.size()), pindex->nHeight, i, hash, j, true), prevout.nValue * -1));
+
+                    // restore unspent index
+                    addressUnspentIndex.push_back(std::make_pair(CAddressUnspentKey(scriptType, uint256(hashBytes.data(), hashBytes.size()), input.prevout.hash, input.prevout.n), CAddressUnspentValue(prevout.nValue, prevout.scriptPubKey, undoHeight)));
+                }
             }
             // At this point, all of txundo.vprevout should have been moved out.
+        }
+    }
+
+    // Sugar: Addressindex
+    if (fAddressIndex) {
+        if (!m_blockman.m_block_tree_db->EraseAddressIndex(addressIndex)) {
+            AbortNode("Failed to delete address index");
+            return DISCONNECT_FAILED;
+        }
+        if (!m_blockman.m_block_tree_db->UpdateAddressUnspentIndex(addressUnspentIndex)) {
+            AbortNode("Failed to write address unspent index");
+            return DISCONNECT_FAILED;
         }
     }
 
@@ -2282,9 +2393,18 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     int nInputs = 0;
     int64_t nSigOpsCost = 0;
     blockundo.vtxundo.reserve(block.vtx.size() - 1);
+
+    // Sugar: Addressindex
+    std::vector<std::pair<CAddressIndexKey, CAmount> > addressIndex;
+    std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> > addressUnspentIndex;
+    std::vector<std::pair<CSpentIndexKey, CSpentIndexValue> > spentIndex;
+
     for (unsigned int i = 0; i < block.vtx.size(); i++)
     {
         const CTransaction &tx = *(block.vtx[i]);
+
+        // Sugar: Addressindex
+        const uint256 txhash = tx.GetHash();
 
         nInputs += tx.vin.size();
 
@@ -2316,6 +2436,38 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
                 LogPrintf("ERROR: %s: contains a non-BIP68-final transaction\n", __func__);
                 return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-nonfinal");
             }
+
+            // Sugar: Addressindex
+            if (fAddressIndex || fSpentIndex)
+            {
+                for (size_t j = 0; j < tx.vin.size(); j++) {
+                    const CTxIn input = tx.vin[j];
+                    const Coin& coin = view.AccessCoin(tx.vin[j].prevout);
+                    const CTxOut &prevout = coin.out;
+
+                    std::vector<unsigned char> hashBytes;
+                    int scriptType = 0;
+
+                    if (!ExtractIndexInfo(&prevout.scriptPubKey, scriptType, hashBytes)
+                        || scriptType == 0) {
+                        continue;
+                    }
+
+                    if (fAddressIndex) {
+                        // record spending activity
+                        addressIndex.push_back(std::make_pair(CAddressIndexKey(scriptType, uint256(hashBytes.data(), hashBytes.size()), pindex->nHeight, i, txhash, j, true), prevout.nValue * -1));
+
+                        // remove address from unspent index
+                        addressUnspentIndex.push_back(std::make_pair(CAddressUnspentKey(scriptType, uint256(hashBytes.data(), hashBytes.size()), input.prevout.hash, input.prevout.n), CAddressUnspentValue()));
+                    }
+
+                    if (fSpentIndex) {
+                        // add the spent index to determine the txid and input that spent an output
+                        // and to find the amount and address from an input
+                        spentIndex.push_back(std::make_pair(CSpentIndexKey(input.prevout.hash, input.prevout.n), CSpentIndexValue(txhash, j, pindex->nHeight, prevout.nValue, scriptType, uint256(hashBytes.data(), hashBytes.size()))));
+                    }
+                }
+            }
         }
 
         // GetTransactionSigOpCost counts 3 types of sigops:
@@ -2341,6 +2493,27 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
                     tx.GetHash().ToString(), state.ToString());
             }
             control.Add(std::move(vChecks));
+        }
+
+        // Sugar: Addressindex
+        if (fAddressIndex) {
+            for (unsigned int k = 0; k < tx.vout.size(); k++) {
+                const CTxOut &out = tx.vout[k];
+
+                std::vector<unsigned char> hashBytes;
+                int scriptType = 0;
+
+                if (!ExtractIndexInfo(&out.scriptPubKey, scriptType, hashBytes)
+                    || scriptType == 0) {
+                    continue;
+                }
+
+                // record receiving activity
+                addressIndex.push_back(std::make_pair(CAddressIndexKey(scriptType, uint256(hashBytes.data(), hashBytes.size()), pindex->nHeight, i, txhash, k, false), out.nValue));
+
+                // record unspent output
+                addressUnspentIndex.push_back(std::make_pair(CAddressUnspentKey(scriptType, uint256(hashBytes.data(), hashBytes.size()), txhash, k), CAddressUnspentValue(out.nValue, out.scriptPubKey, pindex->nHeight)));
+            }
         }
 
         CTxUndo undoDummy;
@@ -2389,10 +2562,29 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
              Ticks<SecondsDouble>(time_undo),
              Ticks<MillisecondsDouble>(time_undo) / num_blocks_total);
 
+    // Sugar: Addressindex
     if (!pindex->IsValid(BLOCK_VALID_SCRIPTS)) {
         pindex->RaiseValidity(BLOCK_VALID_SCRIPTS);
         m_blockman.m_dirty_blockindex.insert(pindex);
     }
+
+    if (fAddressIndex) {
+        if (!m_blockman.m_block_tree_db->WriteAddressIndex(addressIndex)) {
+            return AbortNode(state, "Failed to write address index");
+        }
+
+        if (!m_blockman.m_block_tree_db->UpdateAddressUnspentIndex(addressUnspentIndex)) {
+            return AbortNode(state, "Failed to write address unspent index");
+        }
+    }
+
+    if (fSpentIndex)
+        if (!m_blockman.m_block_tree_db->UpdateSpentIndex(spentIndex))
+            return AbortNode(state, "Failed to write transaction index");
+
+    if (fTimestampIndex)
+        if (!m_blockman.m_block_tree_db->WriteTimestampIndex(CTimestampIndexKey(pindex->nTime, pindex->GetBlockHash())))
+            return AbortNode(state, "Failed to write timestamp index");
 
     // add this block to the view's block chain
     view.SetBestBlock(pindex->GetBlockHash());
@@ -4534,6 +4726,19 @@ bool ChainstateManager::LoadBlockIndex()
         // needs_init.
 
         LogPrintf("Initializing databases...\n");
+
+        // Sugar: Addressindex
+        // Use the provided setting for -addressindex in the new database
+        fAddressIndex = gArgs.GetBoolArg("-addressindex", DEFAULT_ADDRESSINDEX);
+        m_blockman.m_block_tree_db->WriteFlag("addressindex", fAddressIndex);
+
+        // Use the provided setting for -timestampindex in the new database
+        fTimestampIndex = gArgs.GetBoolArg("-timestampindex", DEFAULT_TIMESTAMPINDEX);
+        m_blockman.m_block_tree_db->WriteFlag("timestampindex", fTimestampIndex);
+
+        // Use the provided setting for -spentindex in the new database
+        fSpentIndex = gArgs.GetBoolArg("-spentindex", DEFAULT_SPENTINDEX);
+        m_blockman.m_block_tree_db->WriteFlag("spentindex", fSpentIndex);
     }
     return true;
 }

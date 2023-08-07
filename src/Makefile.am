@@ -118,6 +118,8 @@ endif
 # sugarchain core #
 BITCOIN_CORE_H = \
   addrdb.h \
+  addressindex.h \
+  spentindex.h \
   addrman.h \
   addrman_impl.h \
   attributes.h \

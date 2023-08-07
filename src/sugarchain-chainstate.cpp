@@ -94,6 +94,12 @@ int main(int argc, char* argv[])
     cache_sizes.coins = (450 << 20) - (2 << 20) - (2 << 22);
     node::ChainstateLoadOptions options;
     options.check_interrupt = [] { return false; };
+
+    // Sugar: Addressindex
+    options.addressindex = gArgs.GetBoolArg("-addressindex", DEFAULT_ADDRESSINDEX);
+    options.spentindex = gArgs.GetBoolArg("-spentindex", DEFAULT_SPENTINDEX);
+    options.timestampindex = gArgs.GetBoolArg("-timestampindex", DEFAULT_TIMESTAMPINDEX);
+
     auto [status, error] = node::LoadChainstate(chainman, cache_sizes, options);
     if (status != node::ChainstateLoadStatus::SUCCESS) {
         std::cerr << "Failed to load Chain state from your datadir." << std::endl;

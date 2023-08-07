@@ -25,6 +25,12 @@ struct ChainstateLoadOptions {
     bool reindex{false};
     bool reindex_chainstate{false};
     bool prune{false};
+
+    // Sugar: Addressindex
+    bool addressindex{false};
+    bool timestampindex{false};
+    bool spentindex{false};
+
     //! Setting require_full_verification to true will require all checks at
     //! check_level (below) to succeed for loading to succeed. Setting it to
     //! false will skip checks if cache is not big enough to run them, so may be

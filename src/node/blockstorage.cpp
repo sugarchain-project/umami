@@ -366,6 +366,16 @@ bool BlockManager::LoadBlockIndexDB(const Consensus::Params& consensus_params)
     m_block_tree_db->ReadReindexing(fReindexing);
     if (fReindexing) fReindex = true;
 
+    // Sugar: Addressindex
+    m_block_tree_db->ReadFlag("addressindex", fAddressIndex);
+    LogPrintf("LoadBlockIndexDB(): address index %s\n", fAddressIndex ? "enabled" : "disabled");
+
+    m_block_tree_db->ReadFlag("timestampindex", fTimestampIndex);
+    LogPrintf("LoadBlockIndexDB(): timestamp index %s\n", fTimestampIndex ? "enabled" : "disabled");
+
+    m_block_tree_db->ReadFlag("spentindex", fSpentIndex);
+    LogPrintf("LoadBlockIndexDB(): spent index %s\n", fSpentIndex ? "enabled" : "disabled");
+
     return true;
 }
 

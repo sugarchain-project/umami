@@ -12,6 +12,9 @@
 #include <sync.h>
 #include <util/fs.h>
 
+// Sugar: Addressindex
+#include <spentindex.h>
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -96,6 +99,20 @@ public:
     bool ReadFlag(const std::string &name, bool &fValue);
     bool LoadBlockIndexGuts(const Consensus::Params& consensusParams, std::function<CBlockIndex*(const uint256&)> insertBlockIndex)
         EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
+
+    // Sugar: Addressindex
+    bool ReadSpentIndex(const CSpentIndexKey &key, CSpentIndexValue &value);
+    bool UpdateSpentIndex(const std::vector<std::pair<CSpentIndexKey, CSpentIndexValue> >&vect);
+    bool UpdateAddressUnspentIndex(const std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue > >&vect);
+    bool ReadAddressUnspentIndex(uint256 addressHash, int type,
+                                 std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> > &vect);
+    bool WriteAddressIndex(const std::vector<std::pair<CAddressIndexKey, CAmount> > &vect);
+    bool EraseAddressIndex(const std::vector<std::pair<CAddressIndexKey, CAmount> > &vect);
+    bool ReadAddressIndex(uint256 addressHash, int type,
+                          std::vector<std::pair<CAddressIndexKey, CAmount> > &addressIndex,
+                          int start = 0, int end = 0);
+    bool WriteTimestampIndex(const CTimestampIndexKey &timestampIndex);
+    bool ReadTimestampIndex(const unsigned int &high, const unsigned int &low, std::vector<std::pair<uint256, unsigned int> > &vect) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 };
 
 std::optional<bilingual_str> CheckLegacyTxindex(CBlockTreeDB& block_tree_db);

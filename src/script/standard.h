@@ -148,6 +148,17 @@ struct WitnessUnknown
  */
 using CTxDestination = std::variant<CNoDestination, PKHash, ScriptHash, WitnessV0ScriptHash, WitnessV0KeyHash, WitnessV1Taproot, WitnessUnknown>;
 
+// Sugar: Addressindex
+enum DI {
+    _CNoDestination = 0,
+    _PKHash,
+    _ScriptHash,
+    _WitnessV0ScriptHash,
+    _WitnessV0KeyHash,
+    _WitnessV1Taproot,
+    _WitnessUnknown,
+};
+
 /** Check whether a CTxDestination is a CNoDestination. */
 bool IsValidDestination(const CTxDestination& dest);
 

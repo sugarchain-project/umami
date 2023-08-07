@@ -32,6 +32,13 @@ public:
     /* constructor for constants between 1 and 255 */
     constexpr explicit base_blob(uint8_t v) : m_data{v} {}
 
+    constexpr explicit base_blob(const uint8_t *p, size_t l)
+    {
+        assert(sizeof(m_data) >= l);
+        std::fill(m_data.begin(), m_data.end(), 0);
+        memcpy(m_data.begin(), p, l);
+    }
+
     constexpr explicit base_blob(Span<const unsigned char> vch)
     {
         assert(vch.size() == WIDTH);
@@ -107,6 +114,7 @@ public:
     constexpr uint256() = default;
     constexpr explicit uint256(uint8_t v) : base_blob<256>(v) {}
     constexpr explicit uint256(Span<const unsigned char> vch) : base_blob<256>(vch) {}
+    constexpr explicit uint256(const uint8_t *p, size_t l) : base_blob<256>(p, l) {}
     static const uint256 ZERO;
     static const uint256 ONE;
 };
