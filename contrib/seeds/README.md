@@ -12,9 +12,9 @@ The seeds compiled into the release are created from sipa's DNS seed and AS map
 data. Run the following commands from the `/contrib/seeds` directory:
 
 ```
-curl https://sugarchain.sipa.be/seeds.txt.gz | gzip -dc > seeds_main.txt
-curl https://sugarchain.sipa.be/asmap-filled.dat > asmap-filled.dat
-python3 makeseeds.py -a asmap-filled.dat -s seeds_main.txt > nodes_main.txt
-cat nodes_main_manual.txt >> nodes_main.txt
+curl -s http://1seed.sugarchain.info | gzip -dc > seeds_main.txt
+curl -s http://1seed-testnet.cryptozeny.com | gzip -dc > seeds_main.txt
+python3 makeseeds.py < seeds_main.txt > nodes_main.txt
+python3 makeseeds.py < seeds_test.txt > nodes_test.txt
 python3 generate-seeds.py . > ../../src/chainparamsseeds.h
 ```
