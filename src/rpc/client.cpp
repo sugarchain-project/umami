@@ -220,6 +220,16 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "addpeeraddress", 1, "port"},
     { "addpeeraddress", 2, "tried"},
     { "stop", 0, "wait" },
+    // Sugar: Addressindex
+    { "getblockhashes", 0, "high"},
+    { "getblockhashes", 1, "low"},
+    { "getblockhashes", 2, "options" },
+    { "getspentinfo", 0, "inputs"},
+    { "getaddressdeltas", 0, "addresses"},
+    { "getaddressdeltas", 1, "start" },
+    { "getaddressdeltas", 2, "end" },
+    { "getaddressdeltas", 3, "chainInfo" },
+    { "getaddressesbalance", 0, "addresses"},
 };
 // clang-format on
 

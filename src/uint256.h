@@ -102,6 +102,7 @@ class uint160 : public base_blob<160> {
 public:
     constexpr uint160() = default;
     constexpr explicit uint160(Span<const unsigned char> vch) : base_blob<160>(vch) {}
+    constexpr explicit uint160(const uint8_t *p, size_t l) : base_blob<160>(p, l) {}
 };
 
 /** 256-bit opaque blob.
