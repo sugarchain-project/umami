@@ -1919,8 +1919,13 @@ DisconnectResult Chainstate::DisconnectBlock(const CBlock& block, const CBlockIn
     // Note: the blocks specified here are different than the ones used in ConnectBlock because DisconnectBlock
     // unwinds the blocks in reverse. As a result, the inconsistency is not discovered until the earlier
     // blocks with the duplicate coinbase transactions are disconnected.
+
+    // Skip BIP30
+    /*
     bool fEnforceBIP30 = !((pindex->nHeight==91722 && pindex->GetBlockHash() == uint256S("0x00000000000271a2dc26e7667f8419f2e15416dc6955e5a6c6cdf3f2574dd08e")) ||
                            (pindex->nHeight==91812 && pindex->GetBlockHash() == uint256S("0x00000000000af0aed4792b1acee3d966af36cf5def14935db8de83d6f9306f2f")));
+    */
+   bool fEnforceBIP30 = true;
 
     // undo transactions in reverse order
     for (int i = block.vtx.size() - 1; i >= 0; i--) {
@@ -2188,7 +2193,11 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     // future consensus change to do a new and improved version of BIP34 that
     // will actually prevent ever creating any duplicate coinbases in the
     // future.
+
+    // Skip BIP30
+    /*
     static constexpr int BIP34_IMPLIES_BIP30_LIMIT = 1983702;
+    */
 
     // There is no potential to create a duplicate coinbase at block 209,921
     // because this is still before the BIP34 height and so explicit BIP30
@@ -2225,7 +2234,13 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     // TODO: Remove BIP30 checking from block height 1,983,702 on, once we have a
     // consensus change that ensures coinbases at those heights cannot
     // duplicate earlier coinbases.
+
+    // Skip BIP30
+    /*
     if (fEnforceBIP30 || pindex->nHeight >= BIP34_IMPLIES_BIP30_LIMIT) {
+    */
+
+    if (fEnforceBIP30) {
         for (const auto& tx : block.vtx) {
             for (size_t o = 0; o < tx->vout.size(); o++) {
                 if (view.HaveCoin(COutPoint(tx->GetHash(), o))) {
@@ -3775,7 +3790,12 @@ bool ChainstateManager::AcceptBlockHeader(const CBlockHeader& block, BlockValida
             return true;
         }
 
+        // For performance reason, skip CheckBlockHeader, during download headers // See https://github.com/sugarchain-project/sugarchain/pull/122
+        /*
         if (!CheckBlockHeader(block, state, GetConsensus())) {
+        */
+
+        if (!ActiveChainstate().IsInitialBlockDownload() && !CheckBlockHeader(block, state, GetConsensus())) {
             LogPrint(BCLog::VALIDATION, "%s: Consensus::CheckBlockHeader: %s, %s\n", __func__, hash.ToString(), state.ToString());
             return false;
         }
@@ -3877,9 +3897,7 @@ bool ChainstateManager::ProcessNewBlockHeaders(const std::vector<CBlockHeader>& 
 
         for (const CBlockHeader& header : headers) {
             uint256 hash = header.GetHash();
-            // BlockMap::iterator miSelf = m_blockman.m_block_index.find(hash); // Use "m_blockman.m_block_index" rather than "mapBlockIndex"
             BlockMap::iterator miSelf{m_blockman.m_block_index.find(hash)};
-            CBlockIndex *pindex = nullptr;
             if (miSelf != m_blockman.m_block_index.end()) {
                 // Block header is already known
                 CBlockIndex* pindex = &(miSelf->second);
