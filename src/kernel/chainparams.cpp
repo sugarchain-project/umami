@@ -120,8 +120,8 @@ public:
         assert(maxUint/UintToArith256(consensus.powLimit) >= consensus.nPowAveragingWindow); // 1024 >= 510
         assert(maxUint/UintToArith256(consensus.powLimit) == consensus.nPowAveragingWindow + 514); // 1024 − 510 = 514
 
-        consensus.nMinimumChainWork = uint256S("");
-        consensus.defaultAssumeValid = uint256S(""); // 623950
+        consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000003f23ef34da28"); // getblockhash 6513497 && "chainwork"
+        consensus.defaultAssumeValid = uint256S("0x855f0c66238bc0246c8ca25cf958283fd49b9fb4b217ddeb518e5ea9f5071b9e"); // getblockhash 6513497 && "hash"
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -134,8 +134,8 @@ public:
         pchMessageStart[3] = 0x9d;
         nDefaultPort = 34230;
         nPruneAfterHeight = 100000;
-        m_assumed_blockchain_size = 540;
-        m_assumed_chain_state_size = 7;
+        m_assumed_blockchain_size = 6;
+        m_assumed_chain_state_size = 1;
 
         genesis = CreateGenesisBlock(1565881200, 247, 0x1f3fffff, 1, 42.94967296 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
@@ -149,15 +149,9 @@ public:
         // This is fine at runtime as we'll fall back to using them as an addrfetch if they don't support the
         // service bits we want, but we should get them updated to support all service bits wanted by any
         // release ASAP to avoid it where possible.
-        // vSeeds.emplace_back("seed.sugarchain.sipa.be."); // Pieter Wuille, only supports x1, x5, x9, and xd
-        // vSeeds.emplace_back("dnsseed.bluematt.me."); // Matt Corallo, only supports x9
-        // vSeeds.emplace_back("dnsseed.sugarchain.dashjr.org."); // Luke Dashjr
-        // vSeeds.emplace_back("seed.sugarchainstats.com."); // Christian Decker, supports x1 - xf
-        // vSeeds.emplace_back("seed.sugarchain.jonasschnelli.ch."); // Jonas Schnelli, only supports x1, x5, x9, and xd
-        // vSeeds.emplace_back("seed.sugar.petertodd.org."); // Peter Todd, only supports x1, x5, x9, and xd
-        // vSeeds.emplace_back("seed.sugarchain.sprovoost.nl."); // Sjors Provoost
-        // vSeeds.emplace_back("dnsseed.emzy.de."); // Stephan Oeste
-        // vSeeds.emplace_back("seed.sugarchain.wiz.biz."); // Jason Maurice
+        vSeeds.emplace_back("1seed.sugarchain.info"); // cryptozeny
+        vSeeds.emplace_back("2seed.sugarchain.info"); // cryptozeny
+        vSeeds.emplace_back("seed.sugarchain.site"); // ROZ
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,63); // legacy: starting with "S" (upper)
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,125); // p2sh-segwit: starting with "s" (lower)
@@ -185,10 +179,10 @@ public:
         };
 
         chainTxData = ChainTxData{
-            // Data from RPC: getchaintxstats 4096 000000000000000000035c3f0d31e71a5ee24c5aaf3354689f65bd7b07dee632
-            .nTime    = 0,
-            .nTxCount = 0,
-            .dTxRate  = 0,
+            // Data from RPC: getchaintxstats 4096 855f0c66238bc0246c8ca25cf958283fd49b9fb4b217ddeb518e5ea9f5071b9e
+            .nTime    = 1599181736,
+            .nTxCount = 6858263,
+            .dTxRate  = 0.2053689306146399,
         };
     }
 };
@@ -241,8 +235,8 @@ public:
         assert(maxUint/UintToArith256(consensus.powLimit) >= consensus.nPowAveragingWindow); // 1024 >= 510
         assert(maxUint/UintToArith256(consensus.powLimit) == consensus.nPowAveragingWindow + 514); // 1024 − 510 = 514
 
-        consensus.nMinimumChainWork = uint256S("");
-        consensus.defaultAssumeValid = uint256S(""); // 1692000
+        consensus.nMinimumChainWork = uint256S("0x000000000000000000000000000000000000000000000000000000014d9bf048"); // getblockhash 4000000 && "chainwork" (testnet)
+        consensus.defaultAssumeValid = uint256S("0xbc05c2d5e81785f287cd58a798b64467cff35c8ef2bbe8062d8420eeb86f4056"); // getblockhash 4000000 && "hash" (testnet)
 
         pchMessageStart[0] = 0xb0;
         pchMessageStart[1] = 0x11;
@@ -250,8 +244,8 @@ public:
         pchMessageStart[3] = 0x70;
         nDefaultPort = 44230;
         nPruneAfterHeight = 1000;
-        m_assumed_blockchain_size = 42;
-        m_assumed_chain_state_size = 3;
+        m_assumed_blockchain_size = 1;
+        m_assumed_chain_state_size = 1;
 
         genesis = CreateGenesisBlock(1565913601, 490, 0x1f3fffff, 1, 42.94967296 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
@@ -263,10 +257,7 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
         // nodes with support for servicebits filtering should be at the top
-        // vSeeds.emplace_back("testnet-seed.sugarchain.jonasschnelli.ch.");
-        // vSeeds.emplace_back("seed.tsugar.petertodd.org.");
-        // vSeeds.emplace_back("seed.testnet.sugarchain.sprovoost.nl.");
-        // vSeeds.emplace_back("testnet-seed.bluematt.me."); // Just a static list of stable node(s), only supports x9
+        vSeeds.emplace_back("1seed-testnet.cryptozeny.com"); // cryptozeny
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,66); // legacy: starting with "T" (upper)
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,128); // p2sh-segwit: starting with "t" (lower)
@@ -294,10 +285,10 @@ public:
         };
 
         chainTxData = ChainTxData{
-            // Data from RPC: getchaintxstats 4096 0000000000000021bc50a89cde4870d4a81ffe0153b3c8de77b435a2fd3f6761
-            .nTime    = 0,
-            .nTxCount = 0,
-            .dTxRate  = 0,
+            // Data from RPC: getchaintxstats 4096 bd83debccee1bef17340539beff64ad3feab03c25e5d91969cf5418b8e2fe5a7
+            .nTime    = 1598648664,
+            .nTxCount = 4033793,
+            .dTxRate  = 0.1692345821801809,
         };
     }
 };
@@ -314,17 +305,20 @@ public:
 
         if (!options.challenge) {
             bin = ParseHex("512103ad5e0edad18cb1f0fc0d28a3d4f1f3e445640337489abb10404f2d1e086be430210359ef5021964fe22d6f8e05b2463c9540ce96883fe3b278760f048f5189f2e6c452ae");
+            
+            // TODO: signet not launched yet
+            /*
             vSeeds.emplace_back("seed.signet.sugarchain.sprovoost.nl.");
-
             // Hardcoded nodes can be removed once there are more DNS seeds
             // vSeeds.emplace_back("178.128.221.177");
             // vSeeds.emplace_back("v7ajjeirttkbnt32wpy3c6w3emwnfr3fkla7hpxcfokr3ysd3kqtzmqd.onion:38333");
+            */
 
-            consensus.nMinimumChainWork = uint256S("");
-            consensus.defaultAssumeValid = uint256S(""); // 138000
-            m_assumed_blockchain_size = 1;
-            m_assumed_chain_state_size = 0;
-            chainTxData = ChainTxData{
+            consensus.nMinimumChainWork = uint256S(""); // TODO: signet not launched yet
+            consensus.defaultAssumeValid = uint256S(""); // TODO: signet not launched yet
+            m_assumed_blockchain_size = 0; // TODO: signet not launched yet
+            m_assumed_chain_state_size = 0; // TODO: signet not launched yet
+            chainTxData = ChainTxData{ // TODO: signet not launched yet
                 // Data from RPC: getchaintxstats 4096 0000004429ef154f7e00b4f6b46bfbe2d2678ecd351d95bbfca437ab9a5b84ec
                 .nTime    = 0,
                 .nTxCount = 0,
@@ -332,11 +326,11 @@ public:
             };
         } else {
             bin = *options.challenge;
-            consensus.nMinimumChainWork = uint256{};
-            consensus.defaultAssumeValid = uint256{};
-            m_assumed_blockchain_size = 0;
-            m_assumed_chain_state_size = 0;
-            chainTxData = ChainTxData{
+            consensus.nMinimumChainWork = uint256{}; // a new signet clean
+            consensus.defaultAssumeValid = uint256{}; // a new signet clean
+            m_assumed_blockchain_size = 0; // a new signet clean
+            m_assumed_chain_state_size = 0; // a new signet clean
+            chainTxData = ChainTxData{ // a new signet clean
                 0,
                 0,
                 0,
@@ -476,8 +470,8 @@ public:
         assert(maxUint/UintToArith256(consensus.powLimit) >= consensus.nPowAveragingWindow); // 17 >= 17
         assert(maxUint/UintToArith256(consensus.powLimit) == consensus.nPowAveragingWindow + 0); // 17 − 17 = 0
 
-        consensus.nMinimumChainWork = uint256{};
-        consensus.defaultAssumeValid = uint256{};
+        consensus.nMinimumChainWork = uint256{}; // regtest clean
+        consensus.defaultAssumeValid = uint256{}; // regtest clean
 
         pchMessageStart[0] = 0xaf;
         pchMessageStart[1] = 0xfb;
@@ -485,8 +479,8 @@ public:
         pchMessageStart[3] = 0xad;
         nDefaultPort = 45340;
         nPruneAfterHeight = opts.fastprune ? 100 : 1000;
-        m_assumed_blockchain_size = 0;
-        m_assumed_chain_state_size = 0;
+        m_assumed_blockchain_size = 0; // regtest clean
+        m_assumed_chain_state_size = 0; // regtest clean
 
         for (const auto& [dep, height] : opts.activation_heights) {
             switch (dep) {
@@ -547,7 +541,7 @@ public:
             },
         };
 
-        chainTxData = ChainTxData{
+        chainTxData = ChainTxData{ // regtest clean
             0,
             0,
             0
