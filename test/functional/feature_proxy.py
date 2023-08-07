@@ -187,7 +187,7 @@ class ProxyTest(SugarchainTestFramework):
             self.network_test(node, addr, network=NET_IPV6)
 
         if test_onion:
-            addr = "pg6mmjiyjmcrsslvykfwnntlaru7p5svn6y2ymmju6nubxndf4pscryd.onion:8333"
+            addr = "pg6mmjiyjmcrsslvykfwnntlaru7p5svn6y2ymmju6nubxndf4pscryd.onion:34230"
             self.log.debug(
                 f"Test: outgoing onion connection through node for address {addr}"
             )
@@ -223,7 +223,7 @@ class ProxyTest(SugarchainTestFramework):
             rv.append(cmd)
             self.network_test(node, addr, network=NET_CJDNS)
 
-        addr = "node.noumenon:8333"
+        addr = "node.noumenon:34230"
         self.log.debug(
             f"Test: outgoing DNS name connection through node for address {addr}"
         )

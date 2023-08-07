@@ -246,7 +246,7 @@ class InvalidMessagesTest(SugarchainTestFramework):
             "unrecognized network",
             [
                 "received: addrv2 (25 bytes)",
-                "9.9.9.9:8333 mapped",
+                "9.9.9.9:34230 mapped",
                 "Added 1 addresses",
             ],
             bytes.fromhex(

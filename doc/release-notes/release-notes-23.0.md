@@ -47,7 +47,7 @@ P2P and network changes
   They will become eligible for address gossip after sending an ADDR, ADDRV2,
   or GETADDR message. (#21528)
 
-- Before this release, Sugarchain Core had a strong preference to try to connect only to peers that listen on port 8333. As a result of that, Sugarchain nodes listening on non-standard ports would likely not get any Sugarchain Core peers connecting to them. This preference has been removed. (#23542)
+- Before this release, Sugarchain Core had a strong preference to try to connect only to peers that listen on port 34230. As a result of that, Sugarchain nodes listening on non-standard ports would likely not get any Sugarchain Core peers connecting to them. This preference has been removed. (#23542)
 
 - Full support has been added for the CJDNS network. See the new option `-cjdnsreachable` and [doc/cjdns.md](https://github.com/bitcoin/bitcoin/tree/23.x/doc/cjdns.md) (#23077)
 
