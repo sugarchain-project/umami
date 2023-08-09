@@ -16,7 +16,7 @@
  * for both sugarchaind and sugarchain-qt, to make it harder for attackers to
  * target servers or GUI users specifically.
  */
-const std::string CLIENT_NAME("Satoshi");
+const std::string CLIENT_NAME("Umami");
 
 
 #ifdef HAVE_BUILD_INFO
