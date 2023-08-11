@@ -24,6 +24,7 @@
 #include <cstdint>
 #include <cstring>
 #include <type_traits>
+#include <cmath>
 
 #include <arith_uint256.h> /* SugarShield */
 
