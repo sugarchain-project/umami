@@ -14,7 +14,7 @@ xxd -r -p ./src/bench/data/block6513497.hex ./src/bench/data/block6513497.raw
 ```
 
 ## nBits `src/bench/rpc_blockchain.cpp`
-- BTC `block413567`
+- BTC `block6513497`
 ```py
 bitcoin-cli getblockheader "0000000000000000025aff8be8a55df8f89c77296db6198f272d6577325d4069" | grep bits
 "18058436"
