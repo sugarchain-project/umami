@@ -231,6 +231,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "getaddressdeltas", 3, "chainInfo" },
     { "getaddressesbalance", 0, "addresses"},
     { "getaddressutxos", 1, "amount"},
+    { "getaddressutxos", 2, "chainInfo"},
 };
 // clang-format on
 

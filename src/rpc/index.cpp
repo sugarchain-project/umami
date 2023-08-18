@@ -398,12 +398,14 @@ return RPCHelpMan{"getaddressutxos",
         throw JSONRPCError(RPC_MISC_ERROR, "Address index is not enabled.");
     }
 
+    CAmount requiredAmount = 0;
+    if (!request.params[1].isNull()) {
+        requiredAmount = AmountFromValue(request.params[1]);
+    }
+
     bool includeChainInfo = false;
-    if (request.params[0].isObject()) {
-        UniValue chainInfo = find_value(request.params[0].get_obj(), "chainInfo");
-        if (chainInfo.isBool()) {
-            includeChainInfo = chainInfo.get_bool();
-        }
+    if (!request.params[2].isNull()) {
+        includeChainInfo = request.params[2].get_bool();
     }
 
     std::vector<std::pair<uint256, int> > addresses;
@@ -421,8 +423,13 @@ return RPCHelpMan{"getaddressutxos",
     std::sort(unspentOutputs.begin(), unspentOutputs.end(), heightSort);
 
     UniValue utxos(UniValue::VARR);
+    CAmount total = 0;
 
     for (std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> >::const_iterator it=unspentOutputs.begin(); it!=unspentOutputs.end(); it++) {
+        if (requiredAmount > 0 && total >= requiredAmount) {
+            break;
+        }
+        
         UniValue output(UniValue::VOBJ);
         std::string address;
         if (!getAddressFromIndex(it->first.type, it->first.hashBytes, address)) {
@@ -436,6 +443,8 @@ return RPCHelpMan{"getaddressutxos",
         output.pushKV("satoshis", it->second.satoshis);
         output.pushKV("height", it->second.blockHeight);
         utxos.push_back(output);
+
+        total += it->second.satoshis;
     }
 
     if (includeChainInfo) {
