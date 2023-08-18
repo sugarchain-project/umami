@@ -359,6 +359,7 @@ return RPCHelpMan{"getaddressutxos",
                             {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The base58check encoded address."},
                         },
                     RPCArgOptions{.skip_type_check = true}},
+                    {"amount", RPCArg::Type::AMOUNT, RPCArg::Default{0}, "The required amount in " + CURRENCY_UNIT + " to get UTXO for. eg 0.1"},
                     {"chainInfo", RPCArg::Type::BOOL, RPCArg::Default{false}, "Include chain info in results, only applies if start and end specified."},
                 },
                 {
